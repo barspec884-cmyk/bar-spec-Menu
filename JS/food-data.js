@@ -1,0 +1,3 @@
+﻿// JavaScript Document
+const foodData = [
+];
