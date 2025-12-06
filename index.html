@@ -1,5 +1,4 @@
-﻿
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -7,7 +6,7 @@
 <title>Bar SPEC Menu</title>
 <style>
     /* =========================================
-       デザイン設定 (ダブルインデックス)
+       デザイン設定 (店内閲覧用)
        ========================================= */
     :root {
         --bg-binder: #1a1a1a;
@@ -51,7 +50,11 @@
         width: 140px; background-color: #1a1a1a;
         display: flex; flex-direction: column;
         padding-top: 10px; flex-shrink: 0; overflow-y: auto; z-index: 10;
+        /* スクロールバー非表示 */
+        -ms-overflow-style: none; scrollbar-width: none;
     }
+    .tabs-container::-webkit-scrollbar { display: none; }
+
     .tab-btn {
         padding: 15px 10px; margin-bottom: 4px;
         background-color: var(--tab-inactive); color: var(--text-sub);
@@ -76,7 +79,7 @@
     }
 
     .page-header {
-        padding: 20px 40px 10px 40px; /* 下のパディングを減らす */
+        padding: 20px 40px 10px 40px;
         background: #2a2a2a; 
         display: flex; justify-content: space-between; align-items: center;
     }
@@ -133,13 +136,6 @@
     .item-info .sub-name { font-size: 0.85rem; color: #bbb; margin-top: 3px;}
     .item-price { font-size: 1.2rem; font-weight: bold; min-width: 80px; text-align: right; font-family: "Helvetica Neue", Arial, sans-serif; }
 
-    /* ▼▼▼ 追加: 地図用スタイル ▼▼▼ */
-    #map {
-        flex: 1; /* 残りの高さを全て使う */
-        width: 100%;
-        display: none; /* 初期状態は非表示 */
-    }
-
     /* スマホ対応 */
     @media (max-width: 768px) {
         body { flex-direction: column; }
@@ -175,14 +171,13 @@
     <div class="sub-tabs-container" id="sub-tabs-container"></div>
     
     <div class="content-scroll" id="main-content"></div>
-    <div id="map"></div>
 </main>
 
 <script src="menu_data.js"></script>
 
 <script>
     // メニューカテゴリ定義
-    // ▼▼▼ 追加: ACCESSカテゴリを追加 ▼▼▼
+    // ACCESSを削除し、純粋なメニュー構成に変更
     const categories = [
         { id: "recommend", en: "RECOMMEND", jp: "おすすめ" },
         { id: "whisky", en: "WHISKY", jp: "ウイスキー" },
@@ -191,18 +186,15 @@
         { id: "wine", en: "WINE", jp: "ワイン" },
         { id: "cocktail", en: "COCKTAIL", jp: "カクテル" },
         { id: "non_alcohol", en: "NON-AL", jp: "ノンアル" },
-        { id: "food", en: "FOOD", jp: "フード" },
-        { id: "access", en: "ACCESS", jp: "アクセス" } // 追加
+        { id: "food", en: "FOOD", jp: "フード" }
     ];
 
     let currentTab = "recommend";
     let currentSubFolder = "ALL"; 
 
     window.onload = function() {
-        // menu_data.jsが無い場合のエラーハンドリングはACCESS以外で有効
         if (typeof menuData === 'undefined') {
-            // ダミーデータを入れておくか、ACCESSだけは動くようにする等の調整が可能
-            window.menuData = []; // エラー回避用
+            window.menuData = []; // データ読み込みエラー回避
         }
         renderSideTabs();
         updateView();
@@ -231,28 +223,10 @@
         titleEl.innerText = catInfo.en;
 
         const mainContent = document.getElementById('main-content');
-        const mapContainer = document.getElementById('map');
-        const subTabsContainer = document.getElementById('sub-tabs-container');
-
-        // ▼▼▼ 追加: ACCESSタブが選ばれた場合の表示切り替え ▼▼▼
-        if (currentTab === 'access') {
-            mainContent.style.display = 'none';       // リストを隠す
-            subTabsContainer.style.display = 'none';  // サブタブを隠す
-            mapContainer.style.display = 'block';     // 地図を表示
-            
-            // 地図の初期化関数があれば呼ぶ（access_map.js連携用）
-            if (typeof initMap === 'function') {
-                initMap();
-            }
-            return; // ここで処理終了
-        } else {
-            mainContent.style.display = 'block';      // リストを表示
-            mapContainer.style.display = 'none';      // 地図を隠す
-            // サブタブの表示制御は後続の処理で行う
-        }
-
+        
         // --- 通常のメニューリスト表示処理 ---
         const items = menuData.filter(i => i.category === currentTab);
+        // sub_regionが存在するものだけ抽出してタブ化
         const subRegions = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
 
         renderTopTabs(subRegions);
