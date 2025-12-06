@@ -1,4 +1,5 @@
-﻿<!DOCTYPE html>
+﻿
+<!DOCTYPE html>
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
@@ -132,6 +133,13 @@
     .item-info .sub-name { font-size: 0.85rem; color: #bbb; margin-top: 3px;}
     .item-price { font-size: 1.2rem; font-weight: bold; min-width: 80px; text-align: right; font-family: "Helvetica Neue", Arial, sans-serif; }
 
+    /* ▼▼▼ 追加: 地図用スタイル ▼▼▼ */
+    #map {
+        flex: 1; /* 残りの高さを全て使う */
+        width: 100%;
+        display: none; /* 初期状態は非表示 */
+    }
+
     /* スマホ対応 */
     @media (max-width: 768px) {
         body { flex-direction: column; }
@@ -167,12 +175,14 @@
     <div class="sub-tabs-container" id="sub-tabs-container"></div>
     
     <div class="content-scroll" id="main-content"></div>
+    <div id="map"></div>
 </main>
 
 <script src="menu_data.js"></script>
 
 <script>
     // メニューカテゴリ定義
+    // ▼▼▼ 追加: ACCESSカテゴリを追加 ▼▼▼
     const categories = [
         { id: "recommend", en: "RECOMMEND", jp: "おすすめ" },
         { id: "whisky", en: "WHISKY", jp: "ウイスキー" },
@@ -181,22 +191,23 @@
         { id: "wine", en: "WINE", jp: "ワイン" },
         { id: "cocktail", en: "COCKTAIL", jp: "カクテル" },
         { id: "non_alcohol", en: "NON-AL", jp: "ノンアル" },
-        { id: "food", en: "FOOD", jp: "フード" }
+        { id: "food", en: "FOOD", jp: "フード" },
+        { id: "access", en: "ACCESS", jp: "アクセス" } // 追加
     ];
 
     let currentTab = "recommend";
-    let currentSubFolder = "ALL"; // サブカテゴリの選択状態
+    let currentSubFolder = "ALL"; 
 
     window.onload = function() {
+        // menu_data.jsが無い場合のエラーハンドリングはACCESS以外で有効
         if (typeof menuData === 'undefined') {
-            document.getElementById('main-content').innerHTML = "<p style='padding:20px'>Error: menu_data.js not found.</p>";
-            return;
+            // ダミーデータを入れておくか、ACCESSだけは動くようにする等の調整が可能
+            window.menuData = []; // エラー回避用
         }
         renderSideTabs();
         updateView();
     };
 
-    // 左サイドタブの描画
     function renderSideTabs() {
         const container = document.getElementById('tabs-container');
         container.innerHTML = '';
@@ -206,7 +217,7 @@
             btn.innerHTML = `<span class="tab-en">${cat.en}</span><span class="tab-jp">${cat.jp}</span>`;
             btn.onclick = () => {
                 currentTab = cat.id;
-                currentSubFolder = "ALL"; // カテゴリを変えたらサブ選択をリセット
+                currentSubFolder = "ALL";
                 renderSideTabs();
                 updateView();
             };
@@ -214,33 +225,44 @@
         });
     }
 
-    // 画面全体の更新（ヘッダー、上部タブ、コンテンツ）
     function updateView() {
         const titleEl = document.getElementById('page-title');
         const catInfo = categories.find(c => c.id === currentTab);
         titleEl.innerText = catInfo.en;
 
-        // 1. 現在のメインカテゴリのアイテムを取得
+        const mainContent = document.getElementById('main-content');
+        const mapContainer = document.getElementById('map');
+        const subTabsContainer = document.getElementById('sub-tabs-container');
+
+        // ▼▼▼ 追加: ACCESSタブが選ばれた場合の表示切り替え ▼▼▼
+        if (currentTab === 'access') {
+            mainContent.style.display = 'none';       // リストを隠す
+            subTabsContainer.style.display = 'none';  // サブタブを隠す
+            mapContainer.style.display = 'block';     // 地図を表示
+            
+            // 地図の初期化関数があれば呼ぶ（access_map.js連携用）
+            if (typeof initMap === 'function') {
+                initMap();
+            }
+            return; // ここで処理終了
+        } else {
+            mainContent.style.display = 'block';      // リストを表示
+            mapContainer.style.display = 'none';      // 地図を隠す
+            // サブタブの表示制御は後続の処理で行う
+        }
+
+        // --- 通常のメニューリスト表示処理 ---
         const items = menuData.filter(i => i.category === currentTab);
-        
-        // 2. サブカテゴリ（フォルダ）の一覧を作る
         const subRegions = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
 
-        // 3. 上部タブを描画 (サブカテゴリがある場合のみ)
         renderTopTabs(subRegions);
-
-        // 4. コンテンツリストを描画
         renderList(items);
     }
 
-    // 上部タブ（サブカテゴリ）の描画
     function renderTopTabs(subRegions) {
         const container = document.getElementById('sub-tabs-container');
         container.innerHTML = '';
 
-        // サブカテゴリが全くない場合はタブバーを隠してもいいが、
-        // デザイン統一のため "ALL" だけ表示するか、空にするか。
-        // ここでは「サブカテゴリがある場合のみ」表示するスタイルにします。
         if (subRegions.length === 0) {
             container.style.display = 'none';
             currentSubFolder = "ALL";
@@ -248,14 +270,12 @@
         }
         container.style.display = 'flex';
 
-        // "ALL" タブ
         const allBtn = document.createElement('button');
         allBtn.className = 'sub-tab-btn' + (currentSubFolder === 'ALL' ? ' active' : '');
         allBtn.innerText = 'ALL';
         allBtn.onclick = () => { currentSubFolder = 'ALL'; updateView(); };
         container.appendChild(allBtn);
 
-        // 各サブカテゴリタブ
         subRegions.forEach(region => {
             const btn = document.createElement('button');
             btn.className = 'sub-tab-btn' + (currentSubFolder === region ? ' active' : '');
@@ -263,17 +283,13 @@
             btn.onclick = () => { currentSubFolder = region; updateView(); };
             container.appendChild(btn);
         });
-        
-        // "その他" (sub_region無し) が混ざっている場合の処理が必要ならここに追加
     }
 
-    // 商品リストの描画
     function renderList(items) {
         const container = document.getElementById('main-content');
         container.innerHTML = '';
         container.scrollTop = 0;
 
-        // フィルタリング
         let displayItems = items;
         if (currentSubFolder !== "ALL") {
             displayItems = items.filter(i => i.sub_region === currentSubFolder);
@@ -298,5 +314,6 @@
         });
     }
 </script>
+
 </body>
 </html>
