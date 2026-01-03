@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bar SPEC Menu</title>
-
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bar SPEC">
@@ -30,35 +29,25 @@
     .page-header { padding: 15px 40px; background: #2a2a2a; border-bottom: 1px solid var(--border-color); }
     .page-title { margin: 0; font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 2px; }
 
-    /* リスト表示 */
+    /* カード・リストスタイル */
     .content-scroll { flex: 1; overflow-y: auto; padding: 0 40px 40px 40px; }
-    .item-row, .item-card { border-bottom: 1px dashed #444; padding: 15px 0; }
+    .item-row { border-bottom: 1px dashed #444; padding: 15px 0; }
+    .item-card { display: flex; gap: 20px; border-bottom: 1px solid #444; padding: 20px 0; align-items: flex-start; }
+    .item-img { width: 140px; height: 110px; object-fit: cover; border-radius: 4px; border: 1px solid #555; flex-shrink: 0; }
+    .item-details { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 110px; }
     .item-info h3 { margin: 0; font-size: 1.2rem; color: #e0e0e0; font-weight: normal; display: flex; align-items: center; }
     .sub-name { font-size: 0.85rem; color: #888; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
     .item-price { font-size: 1.2rem; font-weight: bold; color: var(--accent-gold); white-space: nowrap; }
+    .desc-text { font-size: 0.8rem; color: #aaa; margin-top: 8px; font-style: italic; line-height: 1.4; }
 
-    /* ラベル */
+    /* ラベル・モーダル */
     .sold-out { opacity: 0.4; }
     .sold-out-label { color: #ff0000; font-weight: bold; border: 1px solid #ff0000; padding: 1px 6px; font-size: 0.75rem; border-radius: 3px; }
     .bottle-label { color: var(--accent-gold); border: 1px solid var(--accent-gold); padding: 1px 6px; font-size: 0.75rem; border-radius: 3px; font-weight: bold; }
     .info-icon { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.8rem; margin-left: 10px; cursor: pointer; }
-    .item-note { display: block; font-size: 0.75rem; color: #d4af37; margin-top: 4px; font-weight: bold; }
-
-    /* モーダル */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
-/* これを index.html の .modal-content の場所に上書きしてください */
-.modal-content {
-    background: #252525;
-    border-top: 3px solid #d4af37;
-    padding: 30px;
-    width: 90%; /* 横幅を画面の90%に広げる */
-    max-width: 600px; /* PCなど大きな画面でも広がりすぎないように制限 */
-    border-radius: 12px;
-    position: relative;
-    box-shadow: 0 10px 40px rgba(0,0,0,1);
-}
+    .modal-content { background: #252525; border-top: 3px solid #d4af37; padding: 30px; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,1); }
     .modal-close { position: absolute; top: 10px; right: 20px; color: #888; font-size: 2.5rem; cursor: pointer; }
-    .modal-body { white-space: pre-wrap; line-height: 1.8; color: #ccc; font-size: 1rem; max-height: 65vh; overflow-y: auto; }
 </style>
 </head>
 <body>
@@ -68,12 +57,12 @@
 </div>
 
 <nav class="tabs-container">
-    <a href="#recommend" class="tab-link" id="link-recommend"><span class="nav-text">おすすめ</span></a>
-    <a href="#whisky" class="tab-link" id="link-whisky"><span class="nav-text">ウイスキー</span></a>
-    <a href="#spirits" class="tab-link" id="link-spirits"><span class="nav-text">スピリッツ</span></a>
-    <a href="#beer" class="tab-link" id="link-beer"><span class="nav-text">ビール</span></a>
-    <a href="#wine" class="tab-link" id="link-wine"><span class="nav-text">ワイン</span></a>
-    <a href="#food" class="tab-link" id="link-food"><span class="nav-text">フード</span></a>
+    <a href="#recommend" class="tab-link" id="link-recommend"><span class="nav-text"></span></a>
+    <a href="#whisky" class="tab-link" id="link-whisky"><span class="nav-text"></span></a>
+    <a href="#spirits" class="tab-link" id="link-spirits"><span class="nav-text"></span></a>
+    <a href="#beer" class="tab-link" id="link-beer"><span class="nav-text"></span></a>
+    <a href="#wine" class="tab-link" id="link-wine"><span class="nav-text"></span></a>
+    <a href="#food" class="tab-link" id="link-food"><span class="nav-text"></span></a>
 </nav>
 
 <main class="page-area">
@@ -88,15 +77,19 @@
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <span class="modal-close" onclick="closeModal()">&times;</span>
-        <h2 id="modal-title" class="modal-title" style="color:#d4af37"></h2>
-        <div id="modal-body" class="modal-body"></div>
+        <h2 id="modal-title" style="color:#d4af37"></h2>
+        <div id="modal-body" style="white-space:pre-wrap; color:#ccc; line-height:1.8;"></div>
     </div>
 </div>
 
 <script src="menu_data.js" charset="UTF-16"></script>
-
 <script>
     if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
+
+    const categoryLabels = {
+        jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "スピリッツ", beer: "ビール", wine: "ワイン", food: "フード" },
+        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "FOOD" }
+    };
 
     let state = { category: "recommend", lang: "jp" };
 
@@ -119,31 +112,57 @@
     function renderPage() {
         const container = document.getElementById('main-content');
         const items = menuData.filter(i => i.category === state.category);
-        document.getElementById('page-title').innerText = state.category.toUpperCase();
         
-        container.innerHTML = '';
+        // タブのラベル更新
+        document.querySelectorAll('.tab-link').forEach(link => {
+            const cat = link.id.replace('link-', '');
+            const label = (typeof i18n !== 'undefined' && i18n[state.lang][cat]) || categoryLabels[state.lang][cat] || cat;
+            link.querySelector('.nav-text').innerText = label;
+            link.classList.toggle('active', link.id === `link-${state.category}`);
+        });
+
+        document.getElementById('page-title').innerText = (typeof i18n !== 'undefined' && i18n[state.lang][state.category]) || state.category.toUpperCase();
+        
+        container.innerHTML = items.length ? '' : '<p style="text-align:center; padding-top:50px; color:#555;">NO ITEMS</p>';
+
         items.forEach(item => {
             const name = item[`name_${state.lang}`] || item.name_jp;
             const subName = (state.lang === 'jp') ? item.name_en : item.name_jp;
             const desc = item[`desc_${state.lang}`] || item.desc_jp || '';
             const note = item[`note_${state.lang}`] || '';
-            
             const infoIcon = note ? `<span class="info-icon" onclick="showModal('${name.replace(/'/g, "\\'")}', \`${note}\`)">i</span>` : '';
             const isBottle = name.includes("ボトル") || name.includes("Bottle") || desc.includes("ボトル") || desc.includes("Bottle");
             const bottleLabel = isBottle ? `<span class="bottle-label">BOTTLE</span>` : '';
             const soldOutLabel = item.sold_out ? `<span class="sold-out-label">SOLD OUT</span>` : '';
 
-            container.innerHTML += `
-                <div class="item-row ${item.sold_out ? 'sold-out' : ''}">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <div class="item-info">
-                            <h3>${name}${infoIcon}</h3>
-                            <div class="sub-name">${soldOutLabel}${bottleLabel}${subName}</div>
-                            <div style="font-size:0.8rem; color:#aaa; margin-top:4px;">${desc}</div>
+            // ★画像がある場合（リコメンドなど）
+            if (item.image && item.image.trim() !== "") {
+                container.innerHTML += `
+                    <div class="item-card ${item.sold_out ? 'sold-out' : ''}">
+                        <img src="${item.image}" class="item-img" onerror="this.src='images/no-image.png'">
+                        <div class="item-details">
+                            <div class="item-info">
+                                <h3>${name}${infoIcon}</h3>
+                                <div class="sub-name">${soldOutLabel}${bottleLabel}${subName}</div>
+                                <div class="desc-text">${desc}</div>
+                            </div>
+                            <div class="item-price" style="text-align:right;">¥${item.price.toLocaleString()}</div>
                         </div>
-                        <div class="item-price">¥${item.price.toLocaleString()}</div>
-                    </div>
-                </div>`;
+                    </div>`;
+            } else {
+                // ★画像がない場合（ウイスキーなど）
+                container.innerHTML += `
+                    <div class="item-row ${item.sold_out ? 'sold-out' : ''}">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <div class="item-info">
+                                <h3>${name}${infoIcon}</h3>
+                                <div class="sub-name">${soldOutLabel}${bottleLabel}${subName}</div>
+                                <div style="font-size:0.8rem; color:#aaa; margin-top:4px;">${desc}</div>
+                            </div>
+                            <div class="item-price">¥${item.price.toLocaleString()}</div>
+                        </div>
+                    </div>`;
+            }
         });
     }
 </script>
