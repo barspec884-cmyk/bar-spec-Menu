@@ -6,28 +6,64 @@
     <title>Bar SPEC - Login</title>
     <style>
         body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .login-box { background: #252525; padding: 40px; border-radius: 12px; border-top: 3px solid #d4af37; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h1 { color: #d4af37; margin-bottom: 25px; letter-spacing: 2px; }
-        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #444; background: #111; color: #fff; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+        .login-box { background: #252525; padding: 40px; border-radius: 12px; border-top: 3px solid #d4af37; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px; }
+        
+        /* ★追加: ロゴ画像のスタイル */
+        .login-logo { width: 120px; margin-bottom: 25px; }
+
+        /* ★追加: パスワード入力欄とアイコンをまとめる枠 */
+        .pw-wrapper { position: relative; width: 100%; margin-bottom: 20px; }
+        
+        /* 入力欄のスタイル（右側にアイコン分の余白を空ける） */
+        .pw-wrapper input { 
+            width: 100%; padding: 12px; padding-right: 40px; /* 右側に余白 */
+            border: 1px solid #444; background: #111; color: #fff; 
+            border-radius: 4px; box-sizing: border-box; font-size: 1rem; margin-bottom: 0;
+        }
+
+        /* ★追加: 表示切り替えアイコンのスタイル */
+        #togglePw {
+            position: absolute; top: 50%; right: 10px; transform: translateY(-50%);
+            cursor: pointer; color: #888; font-size: 1.3rem;
+        }
+        #togglePw:hover { color: #d4af37; }
+
         button { width: 100%; padding: 12px; background: #d4af37; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
     </style>
 </head>
 <body>
     <div class="login-box">
-        <h1>Bar SPEC</h1>
-        <input type="password" id="pw" placeholder="PASSWORD" onkeypress="if(event.key==='Enter') doLogin()">
+        <img src="images/logo.png" alt="Bar SPEC Logo" class="login-logo" onerror="this.style.display='none'; document.getElementById('backup-title').style.display='block';">
+        <h1 id="backup-title" style="display:none; color: #d4af37; margin-bottom: 25px; letter-spacing: 2px;">Bar SPEC</h1>
+        
+        <div class="pw-wrapper">
+            <input type="password" id="pw" placeholder="PASSWORD" onkeypress="if(event.key==='Enter') doLogin()">
+            <span id="togglePw" onclick="togglePassword()">👁️</span>
+        </div>
+        
         <button onclick="doLogin()">ENTER</button>
         <p id="err" style="color:red; display:none; margin-top:15px;">パスワードが違います</p>
     </div>
 
     <script>
+        // ★追加: パスワードの表示/非表示を切り替える関数
+        function togglePassword() {
+            const pwInput = document.getElementById('pw');
+            const toggleBtn = document.getElementById('togglePw');
+            if (pwInput.type === "password") {
+                pwInput.type = "text"; // 文字を表示
+                toggleBtn.textContent = "🙈"; // アイコンを「隠す」に変更
+            } else {
+                pwInput.type = "password"; // 文字を隠す（●●●）
+                toggleBtn.textContent = "👁️"; // アイコンを「見る」に変更
+            }
+        }
+
         function doLogin() {
             const pass = document.getElementById('pw').value;
             // ★ここがパスワードです。自由に変更してください
             if (pass === "spec2026") { 
-                // ログイン成功：合言葉をブラウザに保存
                 sessionStorage.setItem("isLoggedIn", "true");
-                // メイン画面へ移動
                 window.location.href = "index.html";
             } else {
                 document.getElementById('err').style.display = "block";
