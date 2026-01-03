@@ -1,0 +1,38 @@
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bar SPEC - Login</title>
+    <style>
+        body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: #252525; padding: 40px; border-radius: 12px; border-top: 3px solid #d4af37; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h1 { color: #d4af37; margin-bottom: 25px; letter-spacing: 2px; }
+        input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #444; background: #111; color: #fff; border-radius: 4px; box-sizing: border-box; font-size: 1rem; }
+        button { width: 100%; padding: 12px; background: #d4af37; border: none; font-weight: bold; cursor: pointer; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <h1>Bar SPEC</h1>
+        <input type="password" id="pw" placeholder="PASSWORD" onkeypress="if(event.key==='Enter') doLogin()">
+        <button onclick="doLogin()">ENTER</button>
+        <p id="err" style="color:red; display:none; margin-top:15px;">パスワードが違います</p>
+    </div>
+
+    <script>
+        function doLogin() {
+            const pass = document.getElementById('pw').value;
+            // ★ここがパスワードです。自由に変更してください
+            if (pass === "spec2026") { 
+                // ログイン成功：合言葉をブラウザに保存
+                sessionStorage.setItem("isLoggedIn", "true");
+                // メイン画面へ移動
+                window.location.href = "index.html";
+            } else {
+                document.getElementById('err').style.display = "block";
+            }
+        }
+    </script>
+</body>
+</html>

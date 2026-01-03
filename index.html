@@ -2,155 +2,93 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bar SPEC Menu</title>
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Bar SPEC">
+<link rel="apple-touch-icon" href="images/logo.png">
+
 <style>
-    /* =========================================
-       デザイン設定 (店内閲覧用)
-       ========================================= */
+    /* --- デザイン設定 --- */
     :root {
         --bg-binder: #1a1a1a;
         --bg-page: #252525;
-        --tab-inactive: #333;
-        --tab-active: #c5a059; /* ゴールド */
         --text-main: #fff;
         --text-sub: #aaa;
         --accent-gold: #d4af37;
+        --border-color: #444;
     }
 
-    body {
-        margin: 0; padding: 0;
-        /* 高級感のあるフォント設定 */
-        font-family: "Times New Roman", "YuMincho", "Hiragino Mincho ProN", serif;
-        background-color: var(--bg-binder);
-        color: var(--text-main);
-        height: 100vh;
-        overflow: hidden;
-        display: flex;
-    }
+    body { margin: 0; padding: 0; font-family: "Times New Roman", "YuMincho", serif; background-color: var(--bg-binder); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
+    .sub-name, .tab-jp, .filter-btn, .sub-btn, .sort-bar, .desc-text, .lang-btn { font-family: "Helvetica Neue", Arial, sans-serif; }
+
+    /* サイドバー */
+    .binder-spine { width: 40px; background: #111; display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 40px; flex-shrink: 0; }
+    .binder-hole { width: 15px; height: 15px; background-color: #000; border-radius: 50%; box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1); }
+    .tabs-container { width: 140px; background-color: #1a1a1a; display: flex; flex-direction: column; padding-top: 10px; flex-shrink: 0; overflow-y: auto; scrollbar-width: none; }
+    .tab-link { display: block; text-decoration: none; padding: 15px 10px; margin-bottom: 4px; background-color: #333; color: var(--text-sub); border-radius: 8px 0 0 8px; margin-left: 8px; transition: 0.2s; cursor: pointer; }
+    .tab-link:hover { background-color: #444; transform: translateX(-3px); color: #fff; }
+    .tab-link.active { background-color: #c5a059; color: #000; font-weight: bold; margin-left: 0; padding-left: 18px; box-shadow: -2px 2px 5px rgba(0,0,0,0.3); }
+
+    /* 言語セレクター */
+    .lang-selector { display: flex; justify-content: flex-end; gap: 5px; padding: 10px 40px; background: #1a1a1a; border-bottom: 1px solid var(--border-color); }
+    .lang-btn { background: #333; border: 1px solid #555; color: #aaa; padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; transition: 0.2s; }
+    .lang-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); font-weight: bold; }
+
+    /* メインエリア */
+    .page-area { flex: 1; background-color: var(--bg-page); display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
+    .page-header { padding: 15px 40px; background: #2a2a2a; border-bottom: 1px solid var(--border-color); }
+    .page-title { margin: 0; font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 2px; }
+
+    /* フィルターエリア */
+    .filter-area { padding: 15px 40px; background: #2a2a2a; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
+    .region-row, .sub-region-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .filter-btn { padding: 6px 14px; background: transparent; border: 1px solid #555; color: #aaa; cursor: pointer; transition: 0.2s; font-size: 0.8rem; }
+    .filter-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
+    .sub-btn { padding: 4px 12px; background: #333; border: 1px solid #444; color: #888; border-radius: 15px; cursor: pointer; font-size: 0.8rem; }
+    .sub-btn.active { border-color: var(--accent-gold); color: var(--accent-gold); background: #222; }
+
+    /* ソートバー */
+    .sort-bar { display: flex; justify-content: space-between; padding: 10px 40px; background: #222; border-bottom: 1px solid var(--border-color); color: #888; font-size: 0.85rem; user-select: none; }
+    .sort-btn { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    .sort-btn:hover { color: var(--accent-gold); }
+
+    /* リスト表示 */
+    .content-scroll { flex: 1; overflow-y: auto; padding: 0 40px 40px 40px; }
+    .item-row { display: flex; justify-content: space-between; align-items: center; border-bottom: 1px dashed #444; padding: 15px 0; }
+    .item-info h3 { margin: 0; font-size: 1.2rem; color: #e0e0e0; font-weight: normal; display: flex; align-items: center; }
+    .sub-name { font-size: 0.85rem; color: #888; margin-top: 4px; }
+    .item-price { font-size: 1.2rem; font-weight: bold; color: var(--accent-gold); white-space: nowrap; }
+
+    /* カード型表示（画像あり） */
+    .item-card { display: flex; gap: 20px; border-bottom: 1px solid #444; padding: 20px 0; align-items: flex-start; }
+    .item-img { width: 140px; height: 110px; object-fit: cover; border-radius: 4px; border: 1px solid #555; flex-shrink: 0; }
+    .item-details { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 110px; }
+    .desc-text { font-size: 0.8rem; color: #aaa; margin-top: 8px; font-style: italic; line-height: 1.4; }
+
+    /* 売り切れ・注釈・モーダルのスタイル */
+    .sold-out { opacity: 0.4; }
+    .sold-out-label { color: #ff0000; font-weight: bold; border: 1px solid #ff0000; padding: 1px 6px; margin-right: 8px; font-size: 0.8rem; background: rgba(255, 0, 0, 0.05); border-radius: 3px; }
     
-    /* 日本語フォントはゴシックで見やすく */
-    .sub-name, .tab-jp, .sub-tab-btn {
-        font-family: "Helvetica Neue", Arial, sans-serif;
-    }
+    .info-icon { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.8rem; margin-left: 10px; cursor: pointer; }
+    .item-note { display: block; font-size: 0.75rem; color: #d4af37; margin-top: 4px; font-style: italic; font-weight: bold; }
 
-    /* --- 左サイドバー（メインカテゴリ） --- */
-    .binder-spine {
-        width: 40px; background: #111;
-        display: flex; flex-direction: column; align-items: center;
-        padding-top: 20px; gap: 40px; flex-shrink: 0;
-        box-shadow: inset -5px 0 10px rgba(0,0,0,0.5);
-    }
-    .binder-hole {
-        width: 15px; height: 15px; background-color: #000;
-        border-radius: 50%; box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1);
-    }
+    .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
+    .modal-content { background: #252525; border-top: 3px solid #d4af37; padding: 30px; width: 85%; max-width: 500px; border-radius: 12px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,1); }
+    .modal-close { position: absolute; top: 10px; right: 20px; color: #888; font-size: 2.5rem; cursor: pointer; }
+    .modal-title { color: var(--accent-gold); border-bottom: 1px solid #444; padding-bottom: 15px; margin-top: 0; font-size: 1.4rem; }
+    .modal-body { white-space: pre-wrap; line-height: 1.8; color: #ccc; font-size: 1rem; max-height: 65vh; overflow-y: auto; padding-right: 10px; }
 
-    .tabs-container {
-        width: 140px; background-color: #1a1a1a;
-        display: flex; flex-direction: column;
-        padding-top: 10px; flex-shrink: 0; overflow-y: auto; z-index: 10;
-        /* スクロールバー非表示 */
-        -ms-overflow-style: none; scrollbar-width: none;
-    }
-    .tabs-container::-webkit-scrollbar { display: none; }
-
-    .tab-btn {
-        padding: 15px 10px; margin-bottom: 4px;
-        background-color: var(--tab-inactive); color: var(--text-sub);
-        border: none; text-align: left; cursor: pointer;
-        border-radius: 8px 0 0 8px; margin-left: 8px; transition: 0.2s;
-    }
-    .tab-btn:hover { background-color: #444; transform: translateX(-3px); }
-    .tab-btn.active {
-        background-color: var(--tab-active); color: #000;
-        font-weight: bold; width: 100%; margin-left: 0; padding-left: 18px;
-        box-shadow: -2px 2px 5px rgba(0,0,0,0.3);
-    }
-    .tab-en { display: block; font-size: 0.95em; }
-    .tab-jp { display: block; font-size: 0.7em; opacity: 0.8; font-weight: normal; }
-
-    /* --- メインエリア --- */
-    .page-area {
-        flex: 1; background-color: var(--bg-page);
-        display: flex; flex-direction: column;
-        box-shadow: -5px 0 15px rgba(0,0,0,0.5);
-        position: relative;
-    }
-
-    .page-header {
-        padding: 20px 40px 10px 40px;
-        background: #2a2a2a; 
-        display: flex; justify-content: space-between; align-items: center;
-    }
-    .page-title { margin: 0; font-size: 1.8rem; color: var(--text-main); letter-spacing: 1px; }
-
-    /* --- 上部タブ（サブカテゴリ用） --- */
-    .sub-tabs-container {
-        display: flex;
-        flex-wrap: nowrap;
-        overflow-x: auto; /* タブが多い場合は横スクロール */
-        background: #2a2a2a;
-        padding: 0 40px;
-        border-bottom: 2px solid #444;
-        gap: 5px;
-        flex-shrink: 0;
-        /* スクロールバー非表示 */
-        -ms-overflow-style: none; scrollbar-width: none;
-    }
-    .sub-tabs-container::-webkit-scrollbar { display: none; }
-
-    .sub-tab-btn {
-        background: #333; color: #aaa;
-        border: none;
-        padding: 10px 20px;
-        border-radius: 8px 8px 0 0; /* 上だけ丸く */
-        cursor: pointer;
-        font-size: 0.9rem;
-        white-space: nowrap;
-        transition: 0.2s;
-        position: relative;
-        top: 2px; /* 線に乗せる */
-    }
-    .sub-tab-btn:hover { background: #444; color: #fff; }
-    .sub-tab-btn.active {
-        background: var(--bg-page); /* ページ背景と同じ色 */
-        color: var(--accent-gold);
-        font-weight: bold;
-        border-top: 2px solid var(--accent-gold);
-        z-index: 5;
-    }
-
-    /* --- コンテンツエリア --- */
-    .content-scroll { flex: 1; overflow-y: auto; padding: 20px 40px; }
-
-    /* 商品リスト */
-    .item-row {
-        display: flex; justify-content: space-between; align-items: center;
-        border-bottom: 1px dashed #444; padding: 15px 0;
-        animation: fadeIn 0.3s ease;
-    }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
-
-    .item-info h3 { margin: 0; font-size: 1.2rem; color: var(--accent-gold); letter-spacing: 0.5px; }
-    .item-info .sub-name { font-size: 0.85rem; color: #bbb; margin-top: 3px;}
-    .item-price { font-size: 1.2rem; font-weight: bold; min-width: 80px; text-align: right; font-family: "Helvetica Neue", Arial, sans-serif; }
-
-    /* スマホ対応 */
     @media (max-width: 768px) {
         body { flex-direction: column; }
         .binder-spine { display: none; }
-        .tabs-container {
-            width: 100%; flex-direction: row; padding: 0;
-            background: #111; height: 60px; overflow-x: auto;
-        }
-        .tab-btn {
-            margin: 0; border-radius: 0; min-width: 80px; text-align: center;
-            padding: 8px 5px; flex-shrink: 0; border-right: 1px solid #333;
-        }
-        .page-header { padding: 15px 20px 5px 20px; }
-        .sub-tabs-container { padding: 0 20px; }
-        .content-scroll { padding: 15px 20px; }
+        .tabs-container { width: 100%; flex-direction: row; height: 60px; overflow-x: auto; background: #111; }
+        .tab-link { margin: 0; border-radius: 0; min-width: 90px; text-align: center; border-right: 1px solid #333; padding: 8px 5px; }
+        .lang-selector, .page-header, .filter-area, .sort-bar { padding-left: 20px; padding-right: 20px; }
+        .item-card { flex-direction: column; gap: 12px; }
+        .item-img { width: 100%; height: 160px; }
     }
 </style>
 </head>
@@ -161,133 +99,244 @@
     <div class="binder-hole"></div><div class="binder-hole"></div><div class="binder-hole"></div>
 </div>
 
-<nav class="tabs-container" id="tabs-container"></nav>
+<nav class="tabs-container">
+    <a href="#recommend" class="tab-link" id="link-recommend"><span class="nav-text"></span></a>
+    <a href="#whisky" class="tab-link" id="link-whisky"><span class="nav-text"></span></a>
+    <a href="#spirits" class="tab-link" id="link-spirits"><span class="nav-text"></span></a>
+    <a href="#beer" class="tab-link" id="link-beer"><span class="nav-text"></span></a>
+    <a href="#wine" class="tab-link" id="link-wine"><span class="nav-text"></span></a>
+    <a href="#cocktail" class="tab-link" id="link-cocktail"><span class="nav-text"></span></a>
+    <a href="#food" class="tab-link" id="link-food"><span class="nav-text"></span></a>
+</nav>
 
 <main class="page-area">
-    <div class="page-header">
-        <h2 class="page-title" id="page-title">MENU</h2>
+    <div class="lang-selector" id="lang-btns">
+        <button class="lang-btn active" onclick="setLang('jp')">JP</button>
+        <button class="lang-btn" onclick="setLang('en')">EN</button>
+        <button class="lang-btn" onclick="setLang('ko')">KO</button>
+        <button class="lang-btn" onclick="setLang('zh')">ZH</button>
+        <button class="lang-btn" onclick="setLang('es')">ES</button>
     </div>
 
-    <div class="sub-tabs-container" id="sub-tabs-container"></div>
-    
+    <div class="page-header"><h2 class="page-title" id="page-title">MENU</h2></div>
+
+    <div class="filter-area" id="filter-area" style="display:none;">
+        <div class="region-row" id="region-btns"></div>
+        <div class="sub-region-row" id="sub-region-btns"></div>
+    </div>
+
+    <div class="sort-bar">
+        <div class="sort-btn" onclick="toggleSort('name')"><span>銘柄名</span> <span id="icon-name">⇅</span></div>
+        <div class="sort-btn" onclick="toggleSort('price')"><span>価格</span> <span id="icon-price">⇅</span></div>
+    </div>
+
     <div class="content-scroll" id="main-content"></div>
 </main>
 
-<script src="menu_data.js"></script>
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+        <span class="modal-close" onclick="closeModal()">&times;</span>
+        <h2 id="modal-title" class="modal-title"></h2>
+        <div id="modal-body" class="modal-body"></div>
+    </div>
+</div>
+
+<script src="menu_data.js" charset="UTF-16"></script>
 
 <script>
-    // メニューカテゴリ定義
-    // ACCESSを削除し、純粋なメニュー構成に変更
-    const categories = [
-        { id: "recommend", en: "RECOMMEND", jp: "おすすめ" },
-        { id: "whisky", en: "WHISKY", jp: "ウイスキー" },
-        { id: "brandy", en: "BRANDY", jp: "ブランデー" },
-        { id: "beer", en: "BEER", jp: "ビール" },
-        { id: "wine", en: "WINE", jp: "ワイン" },
-        { id: "cocktail", en: "COCKTAIL", jp: "カクテル" },
-        { id: "non_alcohol", en: "NON-AL", jp: "ノンアル" },
-        { id: "food", en: "FOOD", jp: "フード" }
-    ];
+    // --- 1. ログインチェック ---
+    if (sessionStorage.getItem("isLoggedIn") !== "true") {
+        window.location.href = "login.html";
+    }
 
-    let currentTab = "recommend";
-    let currentSubFolder = "ALL"; 
-
-    window.onload = function() {
-        if (typeof menuData === 'undefined') {
-            window.menuData = []; // データ読み込みエラー回避
-        }
-        renderSideTabs();
-        updateView();
+    // --- 2. 状態管理と翻訳設定 ---
+    let state = {
+        category: "recommend",
+        lang: "jp",
+        region: "ALL",
+        subRegion: "ALL",
+        sort: { key: null, direction: 1 }
     };
 
-    function renderSideTabs() {
-        const container = document.getElementById('tabs-container');
-        container.innerHTML = '';
-        categories.forEach(cat => {
-            const btn = document.createElement('button');
-            btn.className = 'tab-btn' + (cat.id === currentTab ? ' active' : '');
-            btn.innerHTML = `<span class="tab-en">${cat.en}</span><span class="tab-jp">${cat.jp}</span>`;
-            btn.onclick = () => {
-                currentTab = cat.id;
-                currentSubFolder = "ALL";
-                renderSideTabs();
-                updateView();
-            };
-            container.appendChild(btn);
+    const categoryLabels = {
+        jp: { spirits: "スピリッツ", beer: "ビール", wine: "ワイン", cocktail: "カクテル", recommend: "おすすめ", whisky: "ウイスキー", food: "フード" },
+        en: { spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", recommend: "RECOMMEND", whisky: "WHISKY", food: "FOOD" },
+        ko: { spirits: "스피릿", beer: "맥주", wine: "와인", cocktail: "칵테일", recommend: "추천", whisky: "위스키", food: "음식" },
+        zh: { spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒", recommend: "推荐", whisky: "威士忌", food: "主食" },
+        es: { spirits: "DESTILADOS", beer: "CERVEZA", wine: "VINO", cocktail: "CÓCTEL", recommend: "RECOMENDADO", whisky: "WHISKY", food: "COMIDA" }
+    };
+
+    const SUB_REGION_ORDER = ["ALL", "GIN", "VODKA", "RUM", "TEQUILA", "WHISKY", "BRANDY", "LIQUEUR", "BEER", "WINE", "COFFEE"];
+
+    if (typeof i18n !== 'undefined') {
+        Object.keys(categoryLabels).forEach(l => {
+            if (i18n[l]) Object.assign(i18n[l], categoryLabels[l]);
         });
     }
 
-    function updateView() {
-        const titleEl = document.getElementById('page-title');
-        const catInfo = categories.find(c => c.id === currentTab);
-        titleEl.innerText = catInfo.en;
+    // --- 3. 基本機能（言語・ソート・モーダル） ---
+    window.addEventListener('hashchange', () => { 
+        state.category = window.location.hash.replace('#','') || 'recommend';
+        state.region = "ALL";
+        state.subRegion = "ALL";
+        renderFilters();
+        renderPage(); 
+    });
 
-        const mainContent = document.getElementById('main-content');
+    window.addEventListener('load', () => { 
+        state.category = window.location.hash.replace('#','') || 'recommend'; 
+        renderFilters();
+        renderPage(); 
+    });
+
+    function setLang(l) {
+        state.lang = l;
+        document.querySelectorAll('.lang-btn').forEach(btn => {
+            btn.classList.toggle('active', btn.innerText.toLowerCase() === l);
+        });
+        renderPage();
+    }
+
+    function toggleSort(type) {
+        if (state.sort.key === type) state.sort.direction *= -1;
+        else { state.sort.key = type; state.sort.direction = 1; }
+        renderPage();
+    }
+
+    function showModal(name, note) {
+        document.getElementById('modal-title').innerText = name;
+        document.getElementById('modal-body').innerText = note;
+        document.getElementById('modal-overlay').style.display = 'flex';
+    }
+
+    function closeModal() {
+        document.getElementById('modal-overlay').style.display = 'none';
+    }
+
+    // --- 4. フィルタ描画 ---
+    function renderFilters() {
+        const filterArea = document.getElementById('filter-area');
+        const regionRow = document.getElementById('region-btns');
+        const subRow = document.getElementById('sub-region-btns');
         
-        // --- 通常のメニューリスト表示処理 ---
-        const items = menuData.filter(i => i.category === currentTab);
-        // sub_regionが存在するものだけ抽出してタブ化
-        const subRegions = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
+        const categoryItems = menuData.filter(i => i.category === state.category);
+        const regions = [...new Set(categoryItems.map(i => i.region).filter(Boolean))];
+        const availableSubs = [...new Set((state.region === 'ALL' ? categoryItems : categoryItems.filter(i => i.region === state.region)).map(i => i.sub_region).filter(Boolean))];
 
-        renderTopTabs(subRegions);
-        renderList(items);
-    }
-
-    function renderTopTabs(subRegions) {
-        const container = document.getElementById('sub-tabs-container');
-        container.innerHTML = '';
-
-        if (subRegions.length === 0) {
-            container.style.display = 'none';
-            currentSubFolder = "ALL";
+        if (regions.length === 0 && availableSubs.length === 0) {
+            filterArea.style.display = 'none';
             return;
         }
-        container.style.display = 'flex';
 
-        const allBtn = document.createElement('button');
-        allBtn.className = 'sub-tab-btn' + (currentSubFolder === 'ALL' ? ' active' : '');
-        allBtn.innerText = 'ALL';
-        allBtn.onclick = () => { currentSubFolder = 'ALL'; updateView(); };
-        container.appendChild(allBtn);
+        filterArea.style.display = 'flex';
+        regionRow.innerHTML = '';
+        subRow.innerHTML = '';
 
-        subRegions.forEach(region => {
-            const btn = document.createElement('button');
-            btn.className = 'sub-tab-btn' + (currentSubFolder === region ? ' active' : '');
-            btn.innerText = region;
-            btn.onclick = () => { currentSubFolder = region; updateView(); };
-            container.appendChild(btn);
-        });
+        if (regions.length > 0) {
+            ['ALL', ...regions.sort()].forEach(r => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
+                btn.innerText = r;
+                btn.onclick = () => { state.region = r; state.subRegion = "ALL"; renderFilters(); renderPage(); };
+                regionRow.appendChild(btn);
+            });
+        }
+
+        if (availableSubs.length > 0) {
+            const sortedSubs = availableSubs.sort((a, b) => {
+                let indexA = SUB_REGION_ORDER.indexOf(a.toUpperCase());
+                let indexB = SUB_REGION_ORDER.indexOf(b.toUpperCase());
+                if (indexA === -1) indexA = 999;
+                if (indexB === -1) indexB = 999;
+                return indexA - indexB;
+            });
+
+            ['ALL', ...sortedSubs].forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'sub-btn' + (state.subRegion === s ? ' active' : '');
+                btn.innerText = s === "ALL" ? s : s.charAt(0) + s.slice(1).toLowerCase();
+                btn.onclick = () => { state.subRegion = s; renderFilters(); renderPage(); };
+                subRow.appendChild(btn);
+            });
+        }
     }
 
-    function renderList(items) {
+    // --- 5. メメインページ描画 ---
+    function renderPage() {
         const container = document.getElementById('main-content');
-        container.innerHTML = '';
-        container.scrollTop = 0;
+        const titleEl = document.getElementById('page-title');
+        
+        document.querySelectorAll('.tab-link').forEach(link => {
+            const cat = link.id.replace('link-', ''); 
+            const navText = link.querySelector('.nav-text');
+            if (navText && i18n[state.lang][cat]) navText.innerText = i18n[state.lang][cat];
+            link.classList.toggle('active', link.id === `link-${state.category}`);
+        });
 
-        let displayItems = items;
-        if (currentSubFolder !== "ALL") {
-            displayItems = items.filter(i => i.sub_region === currentSubFolder);
+        titleEl.innerText = i18n[state.lang][state.category] || state.category.toUpperCase();
+
+        let items = menuData.filter(i => i.category === state.category);
+        if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
+        if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
+
+        if (state.sort.key) {
+            items.sort((a, b) => {
+                let vA = a[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || a['name_en'] || a['name_jp'];
+                let vB = b[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || b['name_en'] || b['name_jp'];
+                return (typeof vA === 'string' ? vA.localeCompare(vB) : vA - vB) * state.sort.direction;
+            });
         }
 
-        if (displayItems.length === 0) {
-            container.innerHTML = '<p style="text-align:center; color:#555; margin-top:50px;">NO ITEMS</p>';
-            return;
-        }
+        document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
+        document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
+        document.getElementById('icon-name').style.color = state.sort.key === 'name' ? '#d4af37' : '#888';
+        document.getElementById('icon-price').style.color = state.sort.key === 'price' ? '#d4af37' : '#888';
 
-        displayItems.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'item-row';
-            div.innerHTML = `
-                <div class="item-info">
-                    <h3>${item.name_en}</h3>
-                    <div class="sub-name">${item.name_jp}</div>
-                </div>
-                <div class="item-price">¥${item.price.toLocaleString()}</div>
-            `;
-            container.appendChild(div);
+        container.innerHTML = items.length ? '' : '<p style="text-align:center; padding-top:50px; color:#555;">NO ITEMS</p>';
+
+        items.forEach(item => {
+            const name = item[`name_${state.lang}`] || item.name_en || item.name_jp;
+            const subName = (state.lang === 'jp') ? item.name_en : item.name_jp;
+            const desc = item[`desc_${state.lang}`] || item.desc_en || '';
+            const note = item[`note_${state.lang}`] || '';
+            
+            // 注釈アイコン作成
+            const infoIcon = note ? `<span class="info-icon" onclick="showModal('${name.replace(/'/g, "\\'")}', \`${note}\`)">i</span>` : '';
+            const notePreview = note ? `<span class="item-note">★ ${note.split('\n')[0]}</span>` : '';
+
+            if (item.image) {
+                container.innerHTML += `
+                    <div class="item-card ${item.sold_out ? 'sold-out' : ''}">
+                        <img src="${item.image}" class="item-img" onerror="this.src='images/no-image.png'">
+                        <div class="item-details">
+                            <div class="item-info">
+                                <h3>${name}${infoIcon}</h3>
+                                <div class="sub-name">
+                                    ${item.sold_out ? `<span class="sold-out-label">${i18n[state.lang].sold}</span>` : ''}
+                                    ${subName}
+                                </div>
+                                <div class="desc-text">${desc}</div>
+                                ${notePreview}
+                            </div>
+                            <div class="item-price" style="text-align:right;">¥${item.price.toLocaleString()}</div>
+                        </div>
+                    </div>`;
+            } else {
+                container.innerHTML += `
+                    <div class="item-row ${item.sold_out ? 'sold-out' : ''}">
+                        <div class="item-info">
+                            <h3>${name}${infoIcon}</h3>
+                            <div class="sub-name">
+                                ${item.sold_out ? `<span class="sold-out-label">${i18n[state.lang].sold}</span>` : ''}
+                                ${subName}
+                            </div>
+                            ${notePreview}
+                        </div>
+                        <div class="item-price">¥${item.price.toLocaleString()}</div>
+                    </div>`;
+            }
         });
     }
 </script>
-
 </body>
 </html>
