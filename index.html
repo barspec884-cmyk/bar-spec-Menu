@@ -103,9 +103,12 @@
     if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
 
     let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
+	
+	const SUB_REGION_ORDER = ["ALL", "JAPAN", "UK", "USA", "SCOTLAND", "FRANCE", 
+							  "CUBA", "MEXICO"];
     const labels = {
         jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "FOOD", knowledge: "図鑑・知識", map: "MAP" },
-        en: { recommend: "Recommend", whisky: "Whisky", spirits: "Spirits", beer: "Beer", wine: "Wine", food: "Food", knowledge: "Knowledge", map: "MAP" }
+		en: { recommend: "Recommend", whisky: "Whisky", spirits: "Spirits", beer: "Beer", wine: "Wine", food: "Food", knowledge: "Knowledge", map: "MAP" }
     };
 
     function moveSlide(n) {
