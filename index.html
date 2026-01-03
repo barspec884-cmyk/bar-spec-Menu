@@ -4,102 +4,87 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Bar SPEC Menu</title>
+
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Bar SPEC">
 <link rel="apple-touch-icon" href="images/logo.png">
 
 <style>
-    :root { --bg-binder: #1a1a1a; --bg-page: #252525; --text-main: #fff; --text-sub: #aaa; --accent-gold: #d4af37; --border-color: #444; }
-    body { margin: 0; padding: 0; font-family: "Times New Roman", "YuMincho", serif; background-color: var(--bg-binder); color: var(--text-main); height: 100vh; overflow: hidden; display: flex; }
-    .sub-name, .tab-jp, .filter-btn, .sub-btn, .sort-bar, .desc-text, .lang-btn { font-family: "Helvetica Neue", Arial, sans-serif; }
+    :root { --bg-sidebar: #1a1a1a; --bg-main: #252525; --accent-gold: #c5a059; --text-white: #e0e0e0; --text-gray: #888; }
+    
+    body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, "YuGothic", sans-serif; background-color: var(--bg-sidebar); color: var(--text-white); height: 100vh; overflow: hidden; display: flex; }
 
-    /* サイドバー */
-    .binder-spine { width: 40px; background: #111; display: flex; flex-direction: column; align-items: center; padding-top: 20px; gap: 40px; flex-shrink: 0; }
-    .binder-hole { width: 15px; height: 15px; background-color: #000; border-radius: 50%; box-shadow: inset 1px 1px 3px rgba(255,255,255,0.1); }
-    .tabs-container { width: 140px; background-color: #1a1a1a; display: flex; flex-direction: column; padding-top: 10px; flex-shrink: 0; overflow-y: auto; scrollbar-width: none; }
-    .tab-link { display: block; text-decoration: none; padding: 15px 10px; margin-bottom: 4px; background-color: #333; color: var(--text-sub); border-radius: 8px 0 0 8px; margin-left: 8px; transition: 0.2s; cursor: pointer; }
-    .tab-link:hover { background-color: #444; transform: translateX(-3px); color: #fff; }
-    .tab-link.active { background-color: #c5a059; color: #000; font-weight: bold; margin-left: 0; padding-left: 18px; box-shadow: -2px 2px 5px rgba(0,0,0,0.3); }
+    /* サイドバー：スクショの黒×ゴールドを再現 */
+    .sidebar { width: 140px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; flex-shrink: 0; padding-top: 20px; border-right: 1px solid #333; }
+    .tab-link { display: block; text-decoration: none; padding: 20px 15px; color: var(--text-gray); font-size: 0.95rem; border-bottom: 1px solid #2a2a2a; transition: 0.3s; }
+    .tab-link.active { background-color: var(--accent-gold); color: #000; font-weight: bold; }
 
     /* メインエリア */
-    .page-area { flex: 1; background-color: var(--bg-page); display: flex; flex-direction: column; box-shadow: -5px 0 15px rgba(0,0,0,0.5); }
-    .lang-selector { display: flex; justify-content: flex-end; gap: 5px; padding: 10px 40px; background: #1a1a1a; border-bottom: 1px solid var(--border-color); }
-    .lang-btn { background: #333; border: 1px solid #555; color: #aaa; padding: 4px 8px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; }
-    .lang-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); font-weight: bold; }
-    .page-header { padding: 15px 40px; background: #2a2a2a; border-bottom: 1px solid var(--border-color); }
-    .page-title { margin: 0; font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 2px; }
+    .main-area { flex: 1; background-color: var(--bg-main); display: flex; flex-direction: column; overflow: hidden; }
 
-    /* フィルター・ソート */
-    .filter-area { padding: 15px 40px; background: #2a2a2a; border-bottom: 1px solid var(--border-color); display: flex; flex-direction: column; gap: 10px; }
-    .region-row, .sub-region-row { display: flex; gap: 8px; flex-wrap: wrap; }
-    .filter-btn { padding: 6px 14px; background: transparent; border: 1px solid #555; color: #aaa; cursor: pointer; font-size: 0.8rem; }
-    .filter-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
-    .sub-btn { padding: 4px 12px; background: #333; border: 1px solid #444; color: #888; border-radius: 15px; cursor: pointer; font-size: 0.8rem; }
-    .sub-btn.active { border-color: var(--accent-gold); color: var(--accent-gold); background: #222; }
-    .sort-bar { display: flex; justify-content: space-between; padding: 10px 40px; background: #222; border-bottom: 1px solid var(--border-color); color: #888; font-size: 0.85rem; user-select: none; }
-    .sort-btn { cursor: pointer; display: flex; align-items: center; gap: 5px; }
+    /* ヘッダーと言語ボタン */
+    .header { padding: 20px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+    .page-title { margin: 0; font-size: 1.8rem; color: var(--accent-gold); font-family: "YuMincho", serif; }
+    .lang-btns { display: flex; gap: 4px; }
+    .lang-btn { background: #333; border: none; color: #888; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.75rem; font-weight: bold; }
+    .lang-btn.active { background: #f0cc5e; color: #000; }
 
-    /* リスト表示 */
-    .content-scroll { flex: 1; overflow-y: auto; padding: 0 40px 40px 40px; }
-    .item-row { border-bottom: 1px dashed #444; padding: 15px 0; }
-    .item-card { display: flex; gap: 20px; border-bottom: 1px solid #444; padding: 20px 0; align-items: flex-start; }
-    .item-img { width: 140px; height: 110px; object-fit: cover; border-radius: 4px; border: 1px solid #555; flex-shrink: 0; }
-    .item-details { flex: 1; display: flex; flex-direction: column; justify-content: space-between; min-height: 110px; }
-    .item-info h3 { margin: 0; font-size: 1.2rem; color: #e0e0e0; font-weight: normal; display: flex; align-items: center; }
-    .sub-name { font-size: 0.85rem; color: #888; margin-top: 4px; display: flex; align-items: center; gap: 8px; }
-    .item-price { font-size: 1.2rem; font-weight: bold; color: var(--accent-gold); white-space: nowrap; }
+    /* ソートバー：スクショ通り銘柄名と価格を左右に配置 */
+    .sort-bar { background: #1a1a1a; padding: 8px 30px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; border-bottom: 1px solid #333; }
+    .sort-btn { cursor: pointer; display: flex; align-items: center; gap: 4px; }
 
-    /* ラベル・モーダル */
-    .sold-out { opacity: 0.4; }
-    .sold-out-label { color: #ff0000; font-weight: bold; border: 1px solid #ff0000; padding: 1px 6px; font-size: 0.75rem; border-radius: 3px; }
-    .bottle-label { color: var(--accent-gold); border: 1px solid var(--accent-gold); padding: 1px 6px; font-size: 0.75rem; border-radius: 3px; font-weight: bold; }
-    .info-icon { display: inline-block; width: 22px; height: 22px; line-height: 22px; text-align: center; border-radius: 50%; border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 0.8rem; margin-left: 10px; cursor: pointer; }
+    /* リストエリア */
+    .content-scroll { flex: 1; overflow-y: auto; padding: 0 30px 40px 30px; }
+    .item-entry { border-bottom: 1px solid #333; padding: 20px 0; display: flex; justify-content: space-between; align-items: flex-start; }
+    
+    /* カード形式（画像あり） */
+    .item-card { display: flex; gap: 15px; }
+    .item-img { width: 160px; height: 110px; object-fit: cover; border-radius: 6px; border: 1px solid #444; }
+    
+    .item-text h3 { margin: 0; font-size: 1.15rem; color: var(--text-white); font-weight: normal; }
+    .item-sub { font-size: 0.8rem; color: var(--text-gray); margin-top: 4px; }
+    .item-desc { font-size: 0.8rem; color: var(--text-gray); margin-top: 8px; line-height: 1.4; }
+    .item-price { color: var(--accent-gold); font-size: 1.15rem; font-weight: bold; margin-left: 20px; }
+
+    /* 特集ページ（図鑑）用のスタイル */
+    .knowledge-item { margin-bottom: 40px; }
+    .knowledge-img { width: 100%; border-radius: 8px; margin-top: 15px; }
+
+    /* モーダル */
+    .info-icon { display: inline-block; width: 20px; height: 20px; line-height: 20px; text-align: center; border: 1px solid var(--accent-gold); color: var(--accent-gold); border-radius: 50%; font-size: 0.7rem; margin-left: 8px; cursor: pointer; }
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
-    .modal-content { background: #252525; border-top: 3px solid #d4af37; padding: 30px; width: 90%; max-width: 600px; border-radius: 12px; position: relative; box-shadow: 0 10px 40px rgba(0,0,0,1); }
-    .modal-close { position: absolute; top: 10px; right: 20px; color: #888; font-size: 2.5rem; cursor: pointer; }
-
-    @media (max-width: 768px) {
-        .binder-spine { display: none; }
-        .tabs-container { width: 100%; flex-direction: row; height: 60px; }
-        .tab-link { margin: 0; border-radius: 0; min-width: 90px; text-align: center; }
-    }
+    .modal-content { background: #252525; border-top: 4px solid var(--accent-gold); padding: 30px; width: 85%; max-width: 600px; border-radius: 12px; position: relative; }
+    .modal-close { position: absolute; top: 10px; right: 20px; color: #888; font-size: 2rem; cursor: pointer; }
 </style>
 </head>
 <body>
 
-<div class="binder-spine">
-    <div class="binder-hole"></div><div class="binder-hole"></div><div class="binder-hole"></div>
-</div>
-
-<nav class="tabs-container">
-    <a href="#recommend" class="tab-link" id="link-recommend"><span class="nav-text"></span></a>
-    <a href="#whisky" class="tab-link" id="link-whisky"><span class="nav-text"></span></a>
-    <a href="#spirits" class="tab-link" id="link-spirits"><span class="nav-text"></span></a>
-    <a href="#beer" class="tab-link" id="link-beer"><span class="nav-text"></span></a>
-    <a href="#wine" class="tab-link" id="link-wine"><span class="nav-text"></span></a>
-    <a href="#food" class="tab-link" id="link-food"><span class="nav-text"></span></a>
+<nav class="sidebar">
+    <a href="#recommend" class="tab-link" id="link-recommend">おすすめ</a>
+    <a href="#whisky" class="tab-link" id="link-whisky">ウイスキー</a>
+    <a href="#spirits" class="tab-link" id="link-spirits">SPIRITS</a>
+    <a href="#beer" class="tab-link" id="link-beer">BEER</a>
+    <a href="#wine" class="tab-link" id="link-wine">WINE</a>
+    <a href="#food" class="tab-link" id="link-food">フード</a>
+    <a href="#knowledge" class="tab-link" id="link-knowledge">図鑑・知識</a>
 </nav>
 
-<main class="page-area">
-    <div class="lang-selector" id="lang-btns">
-        <button class="lang-btn active" onclick="setLang('jp')">JP</button>
-        <button class="lang-btn" onclick="setLang('en')">EN</button>
-        <button class="lang-btn" onclick="setLang('ko')">KO</button>
-        <button class="lang-btn" onclick="setLang('zh')">ZH</button>
-        <button class="lang-btn" onclick="setLang('es')">ES</button>
+<main class="main-area">
+    <div class="header">
+        <h2 class="page-title" id="page-title">おすすめ</h2>
+        <div class="lang-btns">
+            <button class="lang-btn active" onclick="setLang('jp')">JP</button>
+            <button class="lang-btn" onclick="setLang('en')">EN</button>
+            <button class="lang-btn" onclick="setLang('ko')">KO</button>
+            <button class="lang-btn" onclick="setLang('zh')">ZH</button>
+            <button class="lang-btn" onclick="setLang('es')">ES</button>
+        </div>
     </div>
 
-    <div class="page-header"><h2 class="page-title" id="page-title">MENU</h2></div>
-
-    <div class="filter-area" id="filter-area" style="display:none;">
-        <div class="region-row" id="region-btns"></div>
-        <div class="sub-region-row" id="sub-region-btns"></div>
-    </div>
-
-    <div class="sort-bar">
-        <div class="sort-btn" onclick="toggleSort('name')"><span>銘柄名</span> <span id="icon-name">⇅</span></div>
-        <div class="sort-btn" onclick="toggleSort('price')"><span>価格</span> <span id="icon-price">⇅</span></div>
+    <div class="sort-bar" id="sort-bar">
+        <div class="sort-btn" onclick="toggleSort('name')">銘柄名 <span id="icon-name">▲</span></div>
+        <div class="sort-btn" onclick="toggleSort('price')">価格 <span id="icon-price">⇅</span></div>
     </div>
 
     <div class="content-scroll" id="main-content"></div>
@@ -108,7 +93,7 @@
 <div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
     <div class="modal-content" onclick="event.stopPropagation()">
         <span class="modal-close" onclick="closeModal()">&times;</span>
-        <h2 id="modal-title" style="color:#d4af37; margin-top:0;"></h2>
+        <h2 id="modal-title" style="color:var(--accent-gold); margin-top:0;"></h2>
         <div id="modal-body" style="white-space:pre-wrap; color:#ccc; line-height:1.8;"></div>
     </div>
 </div>
@@ -117,8 +102,11 @@
 <script>
     if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
 
-    let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: null, direction: 1 } };
-    const SUB_REGION_ORDER = ["ALL", "GIN", "VODKA", "RUM", "TEQUILA", "WHISKY", "BRANDY", "LIQUEUR", "BEER", "WINE", "COFFEE"];
+    let state = { category: "recommend", lang: "jp", sort: { key: 'name', direction: 1 } };
+    const labels = {
+        jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "フード", knowledge: "図鑑・知識" },
+        en: { recommend: "Recommend", whisky: "Whisky", spirits: "Spirits", beer: "Beer", wine: "Wine", food: "Food", knowledge: "Knowledge" }
+    };
 
     function setLang(l) {
         state.lang = l;
@@ -126,21 +114,14 @@
         renderPage();
     }
 
-    function toggleSort(type) {
-        if (state.sort.key === type) state.sort.direction *= -1;
-        else { state.sort.key = type; state.sort.direction = 1; }
+    function toggleSort(key) {
+        if (state.sort.key === key) state.sort.direction *= -1;
+        else { state.sort.key = key; state.sort.direction = 1; }
         renderPage();
     }
 
-    window.addEventListener('hashchange', () => { 
-        state.category = window.location.hash.replace('#','') || 'recommend';
-        state.region = "ALL"; state.subRegion = "ALL";
-        renderFilters(); renderPage(); 
-    });
-    window.addEventListener('load', () => { 
-        state.category = window.location.hash.replace('#','') || 'recommend'; 
-        renderFilters(); renderPage(); 
-    });
+    window.addEventListener('hashchange', () => { state.category = window.location.hash.replace('#','') || 'recommend'; renderPage(); });
+    window.addEventListener('load', () => { state.category = window.location.hash.replace('#','') || 'recommend'; renderPage(); });
 
     function showModal(name, note) {
         document.getElementById('modal-title').innerText = name;
@@ -149,81 +130,73 @@
     }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-    function renderFilters() {
-        const filterArea = document.getElementById('filter-area');
-        const regionRow = document.getElementById('region-btns');
-        const subRow = document.getElementById('sub-region-btns');
-        const categoryItems = menuData.filter(i => i.category === state.category);
-        const regions = [...new Set(categoryItems.map(i => i.region).filter(Boolean))];
-        const availableSubs = [...new Set((state.region === 'ALL' ? categoryItems : categoryItems.filter(i => i.region === state.region)).map(i => i.sub_region).filter(Boolean))];
-
-        if (regions.length === 0 && availableSubs.length === 0) { filterArea.style.display = 'none'; return; }
-        filterArea.style.display = 'flex'; regionRow.innerHTML = ''; subRow.innerHTML = '';
-
-        if (regions.length > 0) {
-            ['ALL', ...regions.sort()].forEach(r => {
-                const btn = document.createElement('button'); btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
-                btn.innerText = r; btn.onclick = () => { state.region = r; state.subRegion = "ALL"; renderFilters(); renderPage(); };
-                regionRow.appendChild(btn);
-            });
-        }
-        if (availableSubs.length > 0) {
-            const sortedSubs = availableSubs.sort((a, b) => {
-                let indexA = SUB_REGION_ORDER.indexOf(a.toUpperCase()); let indexB = SUB_REGION_ORDER.indexOf(b.toUpperCase());
-                return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
-            });
-            ['ALL', ...sortedSubs].forEach(s => {
-                const btn = document.createElement('button'); btn.className = 'sub-btn' + (state.subRegion === s ? ' active' : '');
-                btn.innerText = s; btn.onclick = () => { state.subRegion = s; renderFilters(); renderPage(); };
-                subRow.appendChild(btn);
-            });
-        }
-    }
-
     function renderPage() {
         const container = document.getElementById('main-content');
+        const items = menuData.filter(i => i.category === state.category);
         
-        document.querySelectorAll('.tab-link').forEach(link => {
-            const cat = link.id.replace('link-', '');
-            link.querySelector('.nav-text').innerText = (i18n[state.lang] && i18n[state.lang][cat]) || cat.toUpperCase();
-            link.classList.toggle('active', link.id === `link-${state.category}`);
+        // サイドバーとタイトルの更新
+        document.querySelectorAll('.tab-link').forEach(l => {
+            const cat = l.id.replace('link-','');
+            l.classList.toggle('active', cat === state.category);
+            l.innerText = (labels[state.lang] && labels[state.lang][cat]) || (i18n[state.lang] && i18n[state.lang][cat]) || cat.toUpperCase();
         });
+        document.getElementById('page-title').innerText = (labels[state.lang] && labels[state.lang][state.category]) || state.category.toUpperCase();
 
-        document.getElementById('page-title').innerText = (i18n[state.lang] && i18n[state.lang][state.category]) || state.category.toUpperCase();
-        
-        let items = menuData.filter(i => i.category === state.category);
-        if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
-        if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
-
-        if (state.sort.key) {
-            items.sort((a, b) => {
-                let vA = a[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || a['name_jp'];
-                let vB = b[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || b['name_jp'];
-                return (typeof vA === 'string' ? vA.localeCompare(vB) : vA - vB) * state.sort.direction;
-            });
+        // 特集ページ（図鑑）の表示
+        if (state.category === 'knowledge') {
+            document.getElementById('sort-bar').style.display = 'none';
+            container.innerHTML = items.map(item => `
+                <div class="knowledge-item">
+                    <h3>${item[`name_${state.lang}`] || item.name_jp}</h3>
+                    <img src="${item.image}" class="knowledge-img" onerror="this.src='images/no-image.png'">
+                    <p class="item-desc">${item[`desc_${state.lang}`] || item.desc_jp}</p>
+                </div>
+            `).join('');
+            return;
         }
+        document.getElementById('sort-bar').style.display = 'flex';
+
+        // ソート処理
+        items.sort((a, b) => {
+            let vA = a[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || a['name_jp'];
+            let vB = b[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || b['name_jp'];
+            return (typeof vA === 'string' ? vA.localeCompare(vB) : vA - vB) * state.sort.direction;
+        });
 
         document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
         document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
 
-        container.innerHTML = items.length ? '' : '<p style="text-align:center; padding-top:50px; color:#555;">NO ITEMS</p>';
-
-        items.forEach(item => {
+        container.innerHTML = items.map(item => {
             const name = item[`name_${state.lang}`] || item.name_jp;
-            const subName = (state.lang === 'jp') ? item.name_en : item.name_jp;
+            const sub = (state.lang === 'jp') ? item.name_en : item.name_jp;
             const desc = item[`desc_${state.lang}`] || item.desc_jp || '';
-            const note = item[`note_${state.lang}`] || '';
-            const infoIcon = note ? `<span class="info-icon" onclick="showModal('${name.replace(/'/g, "\\'")}', \`${note}\`)">i</span>` : '';
-            const isBottle = name.includes("ボトル") || name.includes("Bottle") || desc.includes("ボトル") || desc.includes("Bottle");
-            const bottleLabel = isBottle ? `<span class="bottle-label">BOTTLE</span>` : '';
-            const soldOutLabel = item.sold_out ? `<span class="sold-out-label">SOLD OUT</span>` : '';
-
-            if (item.image && item.image.trim() !== "") {
-                container.innerHTML += `<div class="item-card ${item.sold_out ? 'sold-out' : ''}"><img src="${item.image}" class="item-img" onerror="this.src='images/no-image.png'"><div class="item-details"><div class="item-info"><h3>${name}${infoIcon}</h3><div class="sub-name">${soldOutLabel}${bottleLabel}${subName}</div><div style="font-size:0.8rem; color:#aaa; margin-top:8px;">${desc}</div></div><div class="item-price" style="text-align:right;">¥${item.price.toLocaleString()}</div></div></div>`;
+            const info = item.note_jp ? `<span class="info-icon" onclick="showModal('${name}', \`${item.note_jp}\`)">i</span>` : '';
+            
+            if (item.image) {
+                return `
+                    <div class="item-entry">
+                        <div class="item-card">
+                            <img src="${item.image}" class="item-img" onerror="this.src='images/no-image.png'">
+                            <div class="item-text">
+                                <h3>${name}${info}</h3>
+                                <div class="item-sub">${sub}</div>
+                                <div class="item-desc">${desc}</div>
+                            </div>
+                        </div>
+                        <div class="item-price">¥${item.price.toLocaleString()}</div>
+                    </div>`;
             } else {
-                container.innerHTML += `<div class="item-row ${item.sold_out ? 'sold-out' : ''}"><div style="display:flex; justify-content:space-between; align-items:center;"><div class="item-info"><h3>${name}${infoIcon}</h3><div class="sub-name">${soldOutLabel}${bottleLabel}${subName}</div><div style="font-size:0.8rem; color:#aaa; margin-top:4px;">${desc}</div></div><div class="item-price">¥${item.price.toLocaleString()}</div></div></div>`;
+                return `
+                    <div class="item-entry">
+                        <div class="item-text">
+                            <h3>${name}${info}</h3>
+                            <div class="item-sub">${sub}</div>
+                            <div class="item-desc">${desc}</div>
+                        </div>
+                        <div class="item-price">¥${item.price.toLocaleString()}</div>
+                    </div>`;
             }
-        });
+        }).join('');
     }
 </script>
 </body>
