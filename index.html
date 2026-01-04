@@ -168,12 +168,15 @@ function setLang(l) {
         renderFilters(); renderPage(); 
     });
 
-    function showModal(name, note) {
-        document.getElementById('modal-title').innerText = name;
-        document.getElementById('modal-body').innerHTML = note.replace(/\n/g, '<br>');
-        document.getElementById('modal-overlay').style.display = 'flex';
-    }
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
+function showModal(name, note) {
+    document.getElementById('modal-title').innerText = name;
+    document.getElementById('modal-body').innerHTML = note.replace(/\n/g, '<br>');
+    document.getElementById('modal-overlay').style.display = 'flex';
+}
+
+function closeModal() {
+    document.getElementById('modal-overlay').style.display = 'none';
+}
 
 function renderFilters() {
     const filterArea = document.getElementById('filter-area');
@@ -311,28 +314,29 @@ items.sort((a, b) => {
         container.innerHTML = items.length ? '' : '<p style="text-align:center; padding-top:50px; color:#555;">NO ITEMS</p>';
 
 // --- 通常のリストモード ---
-        items.forEach(item => {
-            const name = item[`name_${state.lang}`] || item.name_jp;
-            const price = item.price ? `¥${item.price.toLocaleString()}` : '';
-            const note = item[`note_${state.lang}`] || item.note_jp || "";
-            const isSoldOut = item.sold_out === true; // menu_data.js の sold_out 判定
+items.forEach(item => {
+    const name = item[`name_${state.lang}`] || item.name_jp;
+    const price = item.price ? `¥${item.price.toLocaleString()}` : '';
+    const note = item[`note_${state.lang}`] || item.note_jp || ""; // 詳細テキストを取得
+    const isSoldOut = item.sold_out === true; // 売り切れ判定
 
-            // ★修正ポイント：onclick を追加し、売り切れ時は「SOLD OUT」を表示するように変更
-            container.innerHTML += `
-                <div class="item-entry" onclick="if('${note}' !== '') showModal('${name}', '${note.replace(/\n/g, '\\n')}')" style="${note !== '' ? 'cursor:pointer;' : ''}">
-                    <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
-                        ${item.image ? `<img src="${item.image}" class="item-img">` : ''}
-                        <div>
-                            <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
-                                ${name}
-                                ${isSoldOut ? `<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>` : ''}
-                            </div>
-                            <div style="color:#888; font-size:0.8rem; margin-top:4px;">${item.name_en || ''}</div>
-                        </div>
+    container.innerHTML += `
+        <div class="item-entry" 
+             onclick="if('${note}' !== '') showModal('${name}', '${note.replace(/\n/g, '\\n')}')" 
+             style="${note !== '' ? 'cursor:pointer;' : ''}">
+            <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
+                ${item.image ? `<img src="${item.image}" class="item-img">` : ''}
+                <div>
+                    <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                        ${name}
+                        ${isSoldOut ? '<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>' : ''}
                     </div>
-                    <div class="item-price" style="${isSoldOut ? 'color:#555;' : ''}">${isSoldOut ? '---' : price}</div>
-                </div>`;
-        });
+                    <div style="color:#888; font-size:0.8rem; margin-top:4px;">${item.name_en || ''}</div>
+                </div>
+            </div>
+            <div class="item-price" style="${isSoldOut ? 'color:#555;' : ''}">${isSoldOut ? '---' : price}</div>
+        </div>`;
+});
     }
 </script>
 </body>
