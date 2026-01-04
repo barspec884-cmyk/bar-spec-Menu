@@ -390,31 +390,30 @@ if (state.region !== 'ALL') items = items.filter(i => i.region === state.region)
 
 // ★この下の1行を追加して、ベースや都道府県での絞り込みを有効にします
 if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
+		
 if (state.category === 'spirits') {
   items.sort((a, b) => {
-    // sub_region (GIN, RUM等) を取得して比較
-    const sa = (a.sub_region || '').toUpperCase();
-    const sb = (b.sub_region || '').toUpperCase();
+    // --- 第1キー：ベース順（固定） ---
+    const sa = String(a.sub_region || '').trim().toUpperCase();
+    const sb = String(b.sub_region || '').trim().toUpperCase();
 
     const ai = SPIRITS_BASE_ORDER.indexOf(sa);
     const bi = SPIRITS_BASE_ORDER.indexOf(sb);
 
-    // 両方がリストにある場合は、その順番で比較
-    if (ai !== -1 && bi !== -1) {
-      if (ai !== bi) return ai - bi;
-    } else if (ai !== -1) {
-      return -1; // aだけリストにある
-    } else if (bi !== -1) {
-      return 1;  // bだけリストにある
-    }
+    const baseDiff = (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    if (baseDiff !== 0) return baseDiff;
 
-    // 同じベース内、またはリスト外の場合は名前順
-    const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
-    const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
-    return an.localeCompare(bn);
+    // --- 第2キー：sort-bar（銘柄名 or 価格） ---
+    if (state.sort.key === 'price') {
+      return ((a.price || 0) - (b.price || 0)) * state.sort.direction;
+    } else {
+      const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
+      const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
+      return an.localeCompare(bn) * state.sort.direction;
+    }
   });
 } else {
-  // 既存の name / price ソート
+  // 他カテゴリは従来通り
   items.sort((a, b) => {
     if (state.sort.key === 'price') {
       return ((a.price || 0) - (b.price || 0)) * state.sort.direction;
@@ -425,6 +424,7 @@ if (state.category === 'spirits') {
     }
   });
 }
+
 
         document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
         document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
