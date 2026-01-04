@@ -265,12 +265,17 @@ function renderFilters() {
     // -----------------------------
     // 1段目：region が無いカテゴリ（SPIRITS / COCKTAIL / NONAL）は sub_region（ベース）を1段目に出す
     // -----------------------------
-    let subRegions = subRegionsRaw.slice();
-
-    // ベース酒は順番固定（存在するものだけ出す）
-    const inOrder = SPIRITS_BASE_ORDER.filter(s => subRegions.includes(s));
-    const rest = subRegions.filter(s => !SPIRITS_BASE_ORDER.includes(s)).sort();
-    subRegions = [...inOrder, ...rest];
+let subRegions = subRegionsRaw.slice();
+    
+    subRegions.sort((a, b) => {
+      const indexA = SPIRITS_BASE_ORDER.indexOf(a.toUpperCase());
+      const indexB = SPIRITS_BASE_ORDER.indexOf(b.toUpperCase());
+      
+      const posA = indexA === -1 ? 999 : indexA;
+      const posB = indexB === -1 ? 999 : indexB;
+      
+      return posA - posB || a.localeCompare(b);
+    });
 
     ['ALL', ...subRegions].forEach(s => {
       const btn = document.createElement('button');
@@ -385,24 +390,29 @@ if (state.region !== 'ALL') items = items.filter(i => i.region === state.region)
 
 // ★この下の1行を追加して、ベースや都道府県での絞り込みを有効にします
 if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
-		
 if (state.category === 'spirits') {
   items.sort((a, b) => {
-    const sa = (a.sub_region || '').trim().toUpperCase();
-    const sb = (b.sub_region || '').trim().toUpperCase();
+    // sub_region (GIN, RUM等) を取得して比較
+    const sa = (a.sub_region || '').toUpperCase();
+    const sb = (b.sub_region || '').toUpperCase();
 
     const ai = SPIRITS_BASE_ORDER.indexOf(sa);
     const bi = SPIRITS_BASE_ORDER.indexOf(sb);
 
-    if (ai !== -1 && bi !== -1) return ai - bi;
-    if (ai !== -1) return -1;
-    if (bi !== -1) return 1;
+    // 両方がリストにある場合は、その順番で比較
+    if (ai !== -1 && bi !== -1) {
+      if (ai !== bi) return ai - bi;
+    } else if (ai !== -1) {
+      return -1; // aだけリストにある
+    } else if (bi !== -1) {
+      return 1;  // bだけリストにある
+    }
 
+    // 同じベース内、またはリスト外の場合は名前順
     const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
     const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
     return an.localeCompare(bn);
   });
-}
 } else {
   // 既存の name / price ソート
   items.sort((a, b) => {
