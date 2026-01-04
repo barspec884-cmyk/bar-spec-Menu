@@ -65,8 +65,10 @@
     <a href="#spirits" class="tab-link" id="link-spirits">SPIRITS</a>
     <a href="#beer" class="tab-link" id="link-beer">BEER</a>
     <a href="#wine" class="tab-link" id="link-wine">WINE</a>
+    <a href="#cocktail" class="tab-link" id="link-cocktail">COCKTAIL</a>
+    <a href="#nonal" class="tab-link" id="link-nonal">MOCKTAIL</a>
     <a href="#food" class="tab-link" id="link-food">FOOD</a>
-    <a href="#knowledge" class="tab-link" id="link-knowledge">KNOWLEDGE/a>
+        <a href="#knowledge" class="tab-link" id="link-knowledge">KNOWLEDGE</a>
     <a href="#map" class="tab-link" id="link-map">MAP</a>
 </nav>
 
@@ -108,9 +110,7 @@
 
     let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
 	
-	const SUB_REGION_ORDER = ["ALL", "JAPAN", "UK", "USA", "SCOTLAND", "FRANCE", 
-							  "CUBA", "MEXICO"];
-	// ここに Excel の D列 (sub_region) に入れた名前をすべて正確に書き込みます
+// ここに Excel の D列 (sub_region) に入れた名前をすべて正確に書き込みます
     const SUB_REGION_ORDER = [
     "HOKKAIDO", "YAMAGATA", "FUKUSHIMA", "SAITAMA", "SHIZUOKA", 
     "YAMANASHI", "SHIGA", "OSAKA", "KAGOSHIMA", "TOYAMA", 
@@ -194,12 +194,12 @@ es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cer
         
         let items = menuData.filter(i => i.category === state.category);
 
-        // --- 紙芝居モード (KNOWLEDGE / MAP) ---
-        if (state.category === 'knowledge' || state.category === 'map') {
+              // --- 紙芝居（特大カード）モードの対象カテゴリーを増やします ---
+        if (state.category === 'knowledge' || state.category === 'map' || state.category === 'topic' || state.category === 'flight') {
             document.getElementById('sort-bar').style.display = 'none';
             document.getElementById('filter-area').style.display = 'none';
             if (items.length === 0) { container.innerHTML = '<p style="text-align:center; padding-top:50px;">NO DATA</p>'; return; }
-
+			
             if (state.slideIndex >= items.length) state.slideIndex = 0;
             if (state.slideIndex < 0) state.slideIndex = items.length - 1;
 
