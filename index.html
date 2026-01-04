@@ -320,24 +320,46 @@ items.forEach(item => {
     const note = item[`note_${state.lang}`] || item.note_jp || ""; // 詳細テキストを取得
     const isSoldOut = item.sold_out === true; // 売り切れ判定
 
-    container.innerHTML += `
-        <div class="item-entry" 
-             onclick="if('${note}' !== '') showModal('${name}', '${note.replace(/\n/g, '\\n')}')" 
-             style="${note !== '' ? 'cursor:pointer;' : ''}">
-            <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
-                ${item.image ? `<img src="${item.image}" class="item-img">` : ''}
-                <div>
-                    <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
-                        ${name}
-                        ${isSoldOut ? '<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>' : ''}
-                    </div>
-                    <div style="color:#888; font-size:0.8rem; margin-top:4px;">${item.name_en || ''}</div>
-                </div>
-            </div>
-            <div class="item-price" style="${isSoldOut ? 'color:#555;' : ''}">${isSoldOut ? '---' : price}</div>
-        </div>`;
+container.innerHTML += `
+  <div class="item-entry"
+       data-name="${name.replace(/"/g, '&quot;')}"
+       data-note="${note.replace(/"/g, '&quot;')}"
+       style="${note !== '' ? 'cursor:pointer;' : ''}">
+    <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
+      ${item.image ? `<img src="${item.image}" class="item-img">` : ''}
+      <div>
+        <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+          ${name}
+          ${isSoldOut
+            ? '<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>'
+            : ''}
+        </div>
+        <div style="color:#888; font-size:0.8rem; margin-top:4px;">
+          ${item.name_en || ''}
+        </div>
+      </div>
+    </div>
+    <div class="item-price" style="${isSoldOut ? 'color:#555;' : ''}">
+      ${isSoldOut ? '---' : price}
+    </div>
+  </div>`;
 });
+document.querySelectorAll('.item-entry').forEach(el => {
+    el.replaceWith(el.cloneNode(true));
+});
+
+document.querySelectorAll('.item-entry').forEach(el => {
+    const note = el.dataset.note;
+    const name = el.dataset.name;
+
+    if (note && note.trim() !== '') {
+        el.addEventListener('click', () => {
+            showModal(name, note);
+        });
     }
+});
+
+	    }
 </script>
 </body>
 </html>
