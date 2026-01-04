@@ -124,7 +124,8 @@ jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER"
 
 en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL",nonal: "MOCKTAIL", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
 
-ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일",nonal: "목테일" ,food: "푸드", topic: "토픽", flight: "테이스팅 플라이트", knowledge: "지식", map: "지도" },　　　　　　　
+ko: { 
+  recommend: "추천",  whisky: "위스키",  spirits: "스피리츠",  beer: "맥주",  wine: "와인",  cocktail: "칵테일",  nonal: "목테일",  food: "푸드",  topic: "토픽",  flight: "테이스팅 플라이트",  knowledge: "지식",  map: "지도"},
 
 zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒",nonal: "无酒精鸡尾酒" ,food: "餐食", topic: "主题", flight: "品鉴套餐", knowledge: "知识", map: "地图"},
 
@@ -138,11 +139,17 @@ es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cer
         renderPage();
     }
 
-    function setLang(l) {
-        state.lang = l;
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.innerText.toLowerCase() === l));
-        renderPage();
-    }
+function setLang(l) {
+    state.lang = l;
+    document.querySelectorAll('.lang-btn').forEach(b => {
+        b.classList.toggle(
+            'active',
+            b.textContent.trim().toLowerCase() === l
+        );
+    });
+    renderPage();
+}
+
 
     function toggleSort(key) {
         if (state.sort.key === key) state.sort.direction *= -1;
@@ -200,7 +207,12 @@ function renderFilters() {
             };
             regionRow.appendChild(btn);
         });
-    } else if (state.category === 'cocktail' || subRegions.length > 0) {
+} else if (
+    state.category === 'cocktail' ||
+    state.category === 'nonal' ||
+    subRegions.length > 0
+) {
+
         // カクテルのように region がなく、sub_region (ベース) だけある場合
         const sortedSub = SUB_REGION_ORDER.filter(s => subRegions.includes(s));
         ['ALL', ...sortedSub].forEach(s => {
