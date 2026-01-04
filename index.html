@@ -51,7 +51,15 @@
     /* モーダル */
     .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
     .modal-content { background: #252525; border-top: 4px solid var(--accent-gold); padding: 30px; width: 85%; max-width: 600px; border-radius: 12px; position: relative; }
-</style>
+/* ★ モーダル（詳細）ありの印 */
+.has-note::after {
+    content: "ⓘ";
+    margin-left: 6px;
+    font-size: 0.75rem;
+    color: var(--accent-gold);
+    opacity: 0.8;
+}
+
 </head>
 <body>
 
@@ -321,7 +329,7 @@ items.forEach(item => {
     const isSoldOut = item.sold_out === true; // 売り切れ判定
 
 container.innerHTML += `
-  <div class="item-entry"
+  <div class="item-entry ${note !== '' ? 'has-note' : ''}"
        data-name="${name.replace(/"/g, '&quot;')}"
        data-note="${note.replace(/"/g, '&quot;')}"
        style="${note !== '' ? 'cursor:pointer;' : ''}">
