@@ -122,13 +122,13 @@
 const labels = {
 jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL",nonal: "MOCKTAIL",food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
 
-en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL",nonal: "MOCKTAIL" food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
+en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL",nonal: "MOCKTAIL", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
 
-ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일",nonal: "목테일" food: "푸드", topic: "토픽", flight: "테이스팅 플라이트", knowledge: "지식", map: "지도" },　　　　　　　　　
+ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일",nonal: "목테일" ,food: "푸드", topic: "토픽", flight: "테이스팅 플라이트", knowledge: "지식", map: "지도" },　　　　　　　　　
 
-zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒",nonal: "无酒精鸡尾酒" food: "餐食", topic: "主题", flight: "品鉴套餐", knowledge: "知识", map: "地图"},
+zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒",nonal: "无酒精鸡尾酒" ,food: "餐食", topic: "主题", flight: "品鉴套餐", knowledge: "知识", map: "地图"},
 
-es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", cocktail: " Cóctel ",nonal: " Cóctel sin alcohol " food: "Comida", topic: "Tema", flight: "Vuelo de degustación", knowledge: "Conocimiento", map: "Mapa" }
+es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", cocktail: " Cóctel ",nonal: " Cóctel sin alcohol ", food: "Comida", topic: "Tema", flight: "Vuelo de degustación", knowledge: "Conocimiento", map: "Mapa" }
 
 
 };
@@ -168,22 +168,55 @@ es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cer
     }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
 
-    function renderFilters() {
-        const filterArea = document.getElementById('filter-area');
-        const regionRow = document.getElementById('region-btns');
-        const items = menuData.filter(i => i.category === state.category);
-        const regions = [...new Set(items.map(i => i.region).filter(Boolean))];
+function renderFilters() {
+    const filterArea = document.getElementById('filter-area');
+    const regionRow = document.getElementById('region-btns');
+    // 2段目用のエリアを自動で作るようにします
+    const items = menuData.filter(i => i.category === state.category);
+    
+    // 1段目（産地：JAPANESE, SCOTCHなど）の取得
+    const regions = [...new Set(items.map(i => i.region).filter(Boolean))].sort();
 
-        if (regions.length === 0) { filterArea.style.display = 'none'; return; }
-        filterArea.style.display = 'flex'; regionRow.innerHTML = '';
+    if (regions.length === 0) { filterArea.style.display = 'none'; return; }
+    filterArea.style.display = 'flex';
+    regionRow.innerHTML = '';
 
-        ['ALL', ...regions.sort()].forEach(r => {
-            const btn = document.createElement('button'); btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
-            btn.innerText = r; btn.onclick = () => { state.region = r; renderPage(); renderFilters(); };
-            regionRow.appendChild(btn);
-        });
+    // 1段目のボタン作成
+    ['ALL', ...regions].forEach(r => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
+        btn.innerText = r;
+        btn.onclick = () => { 
+            state.region = r; 
+            state.subRegion = "ALL"; // 産地を変えたら都道府県はリセット
+            renderFilters(); renderPage(); 
+        };
+        regionRow.appendChild(btn);
+    });
+
+    // 2段目（都道府県：HOKKAIDO, OSAKAなど）の作成
+    if (state.region !== 'ALL') {
+        const subRegions = [...new Set(items.filter(i => i.region === state.region).map(i => i.sub_region).filter(Boolean))];
+        const sortedSub = SUB_REGION_ORDER.filter(s => subRegions.includes(s));
+
+        if (sortedSub.length > 0) {
+            const subRow = document.createElement('div');
+            subRow.className = 'region-row';
+            subRow.style.marginTop = '8px';
+            subRow.style.borderTop = '1px solid #444';
+            subRow.style.paddingTop = '8px';
+
+            ['ALL', ...sortedSub].forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
+                btn.innerText = s;
+                btn.onclick = () => { state.subRegion = s; renderFilters(); renderPage(); };
+                subRow.appendChild(btn);
+            });
+            regionRow.appendChild(subRow);
+        }
     }
-
+}
     function renderPage() {
         const container = document.getElementById('main-content');
         
@@ -224,8 +257,12 @@ es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cer
         }
 
         // --- 通常のリストモード ---
-        document.getElementById('sort-bar').style.display = 'flex';
-        if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
+// --- 通常のリストモード ---
+document.getElementById('sort-bar').style.display = 'flex';
+if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
+
+// ★この1行を必ず追加してください！これで都道府県の絞り込みが効くようになります
+if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
 
         items.sort((a, b) => {
             let vA = a[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || a['name_jp'];
