@@ -66,7 +66,7 @@
     <a href="#beer" class="tab-link" id="link-beer">BEER</a>
     <a href="#wine" class="tab-link" id="link-wine">WINE</a>
     <a href="#food" class="tab-link" id="link-food">FOOD</a>
-    <a href="#knowledge" class="tab-link" id="link-knowledge">TOPIC</a>
+    <a href="#knowledge" class="tab-link" id="link-knowledge">KNOWLEDGE/a>
     <a href="#map" class="tab-link" id="link-map">MAP</a>
 </nav>
 
@@ -110,13 +110,24 @@
 	
 	const SUB_REGION_ORDER = ["ALL", "JAPAN", "UK", "USA", "SCOTLAND", "FRANCE", 
 							  "CUBA", "MEXICO"];
+	// ここに Excel の D列 (sub_region) に入れた名前をすべて正確に書き込みます
+    const SUB_REGION_ORDER = [
+    "HOKKAIDO", "YAMAGATA", "FUKUSHIMA", "SAITAMA", "SHIZUOKA", 
+    "YAMANASHI", "SHIGA", "OSAKA", "KAGOSHIMA", "TOYAMA", 
+    "BLENDED", "WHISKY", "GIN", "RUM", "VODKA", "BRANDY"
+];
 // 全言語共通でアルファベット表示にする設定
 const labels = {
-    jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "FOOD", knowledge: "KNOWLEDGE", map: "MAP" },
-    en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "FOOD", knowledge: "KNOWLEDGE", map: "MAP" },
-    ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", food: "푸드", knowledge: "토픽", map: "지도" },
-    zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", food: "餐食", knowledge: "主题", map: "地图" },
-    es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", food: "Comida", knowledge: "Tema", map: "Mapa" }
+jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
+
+en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
+
+ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", food: "푸드", topic: "토픽", flight: "테이스팅 플라이트", knowledge: "지식", map: "지도" },　　　　　　　　　
+
+zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", food: "餐食", topic: "主题", flight: "品鉴套餐", knowledge: "知识", map: "地图"},
+
+es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", food: "Comida", topic: "Tema", flight: "Vuelo de degustación", knowledge: "Conocimiento", map: "Mapa" }
+
 };
 
     function moveSlide(n) {
