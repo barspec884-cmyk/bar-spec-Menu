@@ -124,7 +124,7 @@ jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER"
 
 en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL",nonal: "MOCKTAIL", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
 
-ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일",nonal: "목테일" ,food: "푸드", topic: "토픽", flight: "테이스팅 플라이트", knowledge: "지식", map: "지도" },　　　　　　　　　
+ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일",nonal: "목테일" ,food: "푸드", topic: "토픽", flight: "테이스팅 플라이트", knowledge: "지식", map: "지도" },　　　　　　　
 
 zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒",nonal: "无酒精鸡尾酒" ,food: "餐食", topic: "主题", flight: "品鉴套餐", knowledge: "知识", map: "地图"},
 
@@ -283,6 +283,16 @@ if (state.region !== 'ALL') items = items.filter(i => i.region === state.region)
 
 // ★この下の1行を追加して、ベースや都道府県での絞り込みを有効にします
 if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
+		// ★ソート処理を追加（ここ）
+items.sort((a, b) => {
+    if (state.sort.key === 'price') {
+        return ((a.price || 0) - (b.price || 0)) * state.sort.direction;
+    } else {
+        const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
+        const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
+        return an.localeCompare(bn) * state.sort.direction;
+    }
+});
         document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
         document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
 
