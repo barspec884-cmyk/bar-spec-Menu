@@ -171,33 +171,52 @@ es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cer
 function renderFilters() {
     const filterArea = document.getElementById('filter-area');
     const regionRow = document.getElementById('region-btns');
-    // 2段目用のエリアを自動で作るようにします
     const items = menuData.filter(i => i.category === state.category);
     
-    // 1段目（産地：JAPANESE, SCOTCHなど）の取得
+    // 1段目（region）と2段目（sub_region）のデータを取得
     const regions = [...new Set(items.map(i => i.region).filter(Boolean))].sort();
+    const subRegions = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
 
-    if (regions.length === 0) { filterArea.style.display = 'none'; return; }
+    // 産地(region)もサブ地域(sub_region)もなければ隠す
+    if (regions.length === 0 && subRegions.length === 0) { 
+        filterArea.style.display = 'none'; 
+        return; 
+    }
+    
     filterArea.style.display = 'flex';
     regionRow.innerHTML = '';
 
-    // 1段目のボタン作成
-    ['ALL', ...regions].forEach(r => {
-        const btn = document.createElement('button');
-        btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
-        btn.innerText = r;
-        btn.onclick = () => { 
-            state.region = r; 
-            state.subRegion = "ALL"; // 産地を変えたら都道府県はリセット
-            renderFilters(); renderPage(); 
-        };
-        regionRow.appendChild(btn);
-    });
-
-    // 2段目（都道府県：HOKKAIDO, OSAKAなど）の作成
-    if (state.region !== 'ALL') {
-        const subRegions = [...new Set(items.filter(i => i.region === state.region).map(i => i.sub_region).filter(Boolean))];
+    // --- 1段目の表示ルール ---
+    if (regions.length > 0) {
+        // ウイスキーなどのように region がある場合
+        ['ALL', ...regions].forEach(r => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
+            btn.innerText = r;
+            btn.onclick = () => { 
+                state.region = r; 
+                state.subRegion = "ALL"; 
+                renderFilters(); renderPage(); 
+            };
+            regionRow.appendChild(btn);
+        });
+    } else if (state.category === 'cocktail' || subRegions.length > 0) {
+        // カクテルのように region がなく、sub_region (ベース) だけある場合
         const sortedSub = SUB_REGION_ORDER.filter(s => subRegions.includes(s));
+        ['ALL', ...sortedSub].forEach(s => {
+            const btn = document.createElement('button');
+            btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
+            btn.innerText = s;
+            btn.onclick = () => { state.subRegion = s; renderPage(); renderFilters(); };
+            regionRow.appendChild(btn);
+        });
+        return; // カクテルの場合はここで終了
+    }
+
+    // --- 2段目の表示ルール (ウイスキーの都道府県など) ---
+    if (state.region !== 'ALL') {
+        const currentSubs = [...new Set(items.filter(i => i.region === state.region).map(i => i.sub_region).filter(Boolean))];
+        const sortedSub = SUB_REGION_ORDER.filter(s => currentSubs.includes(s));
 
         if (sortedSub.length > 0) {
             const subRow = document.createElement('div');
@@ -210,7 +229,7 @@ function renderFilters() {
                 const btn = document.createElement('button');
                 btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
                 btn.innerText = s;
-                btn.onclick = () => { state.subRegion = s; renderFilters(); renderPage(); };
+                btn.onclick = () => { state.subRegion = s; renderPage(); renderFilters(); };
                 subRow.appendChild(btn);
             });
             regionRow.appendChild(subRow);
@@ -258,18 +277,12 @@ function renderFilters() {
 
         // --- 通常のリストモード ---
 // --- 通常のリストモード ---
+// --- 通常のリストモード ---
 document.getElementById('sort-bar').style.display = 'flex';
 if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
 
-// ★この1行を必ず追加してください！これで都道府県の絞り込みが効くようになります
+// ★この下の1行を追加して、ベースや都道府県での絞り込みを有効にします
 if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
-
-        items.sort((a, b) => {
-            let vA = a[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || a['name_jp'];
-            let vB = b[state.sort.key === 'name' ? `name_${state.lang}` : 'price'] || b['name_jp'];
-            return (typeof vA === 'string' ? vA.localeCompare(vB) : vA - vB) * state.sort.direction;
-        });
-
         document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
         document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
 
