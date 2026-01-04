@@ -238,6 +238,36 @@ function renderFilters() {
   // -----------------------------
   if (regionsRaw.length > 0) {
     let regions = regionsRaw.slice();
+    // --- SPIRITS：ベース酒の表示順を最優先 ---
+if (state.category === 'spirits') {
+  items.sort((a, b) => {
+    const ai = SPIRITS_BASE_ORDER.indexOf(a.sub_region);
+    const bi = SPIRITS_BASE_ORDER.indexOf(b.sub_region);
+
+    // 両方とも定義済み → ベース順
+    if (ai !== -1 && bi !== -1) return ai - bi;
+
+    // 片方だけ定義済み → 定義済みを先
+    if (ai !== -1) return -1;
+    if (bi !== -1) return 1;
+
+    // どちらも未定義 → 名前順
+    const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
+    const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
+    return an.localeCompare(bn);
+  });
+} else {
+  // 既存の name / price ソート
+  items.sort((a, b) => {
+    if (state.sort.key === 'price') {
+      return ((a.price || 0) - (b.price || 0)) * state.sort.direction;
+    } else {
+      const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
+      const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
+      return an.localeCompare(bn) * state.sort.direction;
+    }
+  });
+}
 
     // WHISKY の region（国別）だけ順番固定
     if (state.category === 'whisky') {
