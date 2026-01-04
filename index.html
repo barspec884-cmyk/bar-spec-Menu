@@ -147,10 +147,15 @@
     let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
 	
 // ここに Excel の D列 (sub_region) に入れた名前をすべて正確に書き込みます
-    const SUB_REGION_ORDER = [
-    "HOKKAIDO", "YAMAGATA", "FUKUSHIMA", "SAITAMA", "SHIZUOKA", 
-    "YAMANASHI", "SHIGA", "OSAKA", "KAGOSHIMA", "TOYAMA", 
-    "BLENDED", "WHISKY", "GIN", "RUM", "VODKA", "BRANDY"
+// WHISKY（国別）表示順
+const COUNTRY_ORDER = ["JAPANESE", "SCOTCH", "IRISH", "American", "Canadian"];
+
+// SCOTCH を選んだ時の 6エリア表示順
+const SCOTCH_AREA_ORDER = ["SPEYSIDE", "ISLAY", "ISLANDS", "HIGHLAND", "LOWLAND", "CAMPBELTOWN"];
+
+// SPIRITS（ベース）表示順
+const SPIRITS_BASE_ORDER = ["GIN", "VODKA", "RUM", "TEQUILA", "LIQUEUR", "BRANDY", "SHOCHU"];
+
 ];
 const COUNTRY_ORDER = [
   "JAPANESE",
@@ -221,78 +226,126 @@ function closeModal() {
 }
 
 function renderFilters() {
-    const filterArea = document.getElementById('filter-area');
-    const regionRow = document.getElementById('region-btns');
-    const items = menuData.filter(i => i.category === state.category);
-    
-    // 1段目（region）と2段目（sub_region）のデータを取得
-    const regions = [...new Set(items.map(i => i.region).filter(Boolean))].sort();
-    const subRegions = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
+  const filterArea = document.getElementById('filter-area');
+  const regionRow = document.getElementById('region-btns');
+  const items = menuData.filter(i => i.category === state.category);
 
-    // 産地(region)もサブ地域(sub_region)もなければ隠す
-    if (regions.length === 0 && subRegions.length === 0) { 
-        filterArea.style.display = 'none'; 
-        return; 
-    }
-    
-    filterArea.style.display = 'flex';
-    regionRow.innerHTML = '';
+  const regionsRaw = [...new Set(items.map(i => i.region).filter(Boolean))];
+  const subRegionsRaw = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
 
-    // --- 1段目の表示ルール ---
-    if (regions.length > 0) {
-        // ウイスキーなどのように region がある場合
-        ['ALL', ...regions].forEach(r => {
-            const btn = document.createElement('button');
-            btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
-            btn.innerText = r;
-            btn.onclick = () => { 
-                state.region = r; 
-                state.subRegion = "ALL"; 
-                renderFilters(); renderPage(); 
-            };
-            regionRow.appendChild(btn);
-        });
-} else if (
-    state.category === 'cocktail' ||
-    state.category === 'nonal' ||
-    subRegions.length > 0
-) {
+  // regionもsub_regionも無ければ隠す
+  if (regionsRaw.length === 0 && subRegionsRaw.length === 0) {
+    filterArea.style.display = 'none';
+    return;
+  }
 
-        // カクテルのように region がなく、sub_region (ベース) だけある場合
-        const sortedSub = SUB_REGION_ORDER.filter(s => subRegions.includes(s));
-        ['ALL', ...sortedSub].forEach(s => {
-            const btn = document.createElement('button');
-            btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
-            btn.innerText = s;
-            btn.onclick = () => { state.subRegion = s; renderPage(); renderFilters(); };
-            regionRow.appendChild(btn);
-        });
-        return; // カクテルの場合はここで終了
+  filterArea.style.display = 'flex';
+  regionRow.innerHTML = '';
+
+  // -----------------------------
+  // 1段目：region（国など）
+  // -----------------------------
+  if (regionsRaw.length > 0) {
+    let regions = regionsRaw.slice();
+
+    // WHISKY の region（国別）だけ順番固定
+    if (state.category === 'whisky') {
+      const inOrder = COUNTRY_ORDER.filter(r => regions.includes(r));
+      const rest = regions.filter(r => !COUNTRY_ORDER.includes(r)).sort();
+      regions = [...inOrder, ...rest];
+    } else {
+      regions = regions.sort();
     }
 
-    // --- 2段目の表示ルール (ウイスキーの都道府県など) ---
-    if (state.region !== 'ALL') {
-        const currentSubs = [...new Set(items.filter(i => i.region === state.region).map(i => i.sub_region).filter(Boolean))];
-        const sortedSub = SUB_REGION_ORDER.filter(s => currentSubs.includes(s));
+    ['ALL', ...regions].forEach(r => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
+      btn.innerText = r;
+      btn.onclick = () => {
+        state.region = r;
+        state.subRegion = "ALL";
+        renderFilters();
+        renderPage();
+      };
+      regionRow.appendChild(btn);
+    });
+  } else if (['spirits', 'cocktail', 'nonal'].includes(state.category) && subRegionsRaw.length > 0) {
+    // -----------------------------
+    // 1段目：region が無いカテゴリ（SPIRITS / COCKTAIL / NONAL）は sub_region（ベース）を1段目に出す
+    // -----------------------------
+    let subRegions = subRegionsRaw.slice();
 
-        if (sortedSub.length > 0) {
-            const subRow = document.createElement('div');
-            subRow.className = 'region-row';
-            subRow.style.marginTop = '8px';
-            subRow.style.borderTop = '1px solid #444';
-            subRow.style.paddingTop = '8px';
+    // ベース酒は順番固定（存在するものだけ出す）
+    const inOrder = SPIRITS_BASE_ORDER.filter(s => subRegions.includes(s));
+    const rest = subRegions.filter(s => !SPIRITS_BASE_ORDER.includes(s)).sort();
+    subRegions = [...inOrder, ...rest];
 
-            ['ALL', ...sortedSub].forEach(s => {
-                const btn = document.createElement('button');
-                btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
-                btn.innerText = s;
-                btn.onclick = () => { state.subRegion = s; renderPage(); renderFilters(); };
-                subRow.appendChild(btn);
-            });
-            regionRow.appendChild(subRow);
-        }
+    ['ALL', ...subRegions].forEach(s => {
+      const btn = document.createElement('button');
+      btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
+      btn.innerText = s;
+      btn.onclick = () => {
+        state.subRegion = s;
+        renderPage();
+        renderFilters();
+      };
+      regionRow.appendChild(btn);
+    });
+
+    return; // ここで終了（2段目は不要）
+  } else {
+    // regionが無くて、上のカテゴリでもない場合はフィルタ非表示
+    filterArea.style.display = 'none';
+    return;
+  }
+
+  // -----------------------------
+  // 2段目：sub_region（SCOTCHなら6エリア / JAPANESEなら都道府県など）
+  // -----------------------------
+  if (state.region !== 'ALL') {
+    const currentSubsRaw = [...new Set(
+      items
+        .filter(i => i.region === state.region)
+        .map(i => i.sub_region)
+        .filter(Boolean)
+    )];
+
+    let sortedSub = [];
+
+    if (state.category === 'whisky' && state.region === 'SCOTCH') {
+      // SCOTCH：6エリア固定順
+      const inOrder = SCOTCH_AREA_ORDER.filter(s => currentSubsRaw.includes(s));
+      const rest = currentSubsRaw.filter(s => !SCOTCH_AREA_ORDER.includes(s)).sort();
+      sortedSub = [...inOrder, ...rest];
+    } else {
+      // それ以外（JAPANESE都道府県など）：こだわり無しなら自動ソート（存在するものだけ）
+      sortedSub = currentSubsRaw.slice().sort();
     }
+
+    if (sortedSub.length > 0) {
+      const subRow = document.createElement('div');
+      subRow.className = 'region-row';
+      subRow.style.marginTop = '8px';
+      subRow.style.borderTop = '1px solid #444';
+      subRow.style.paddingTop = '8px';
+
+      ['ALL', ...sortedSub].forEach(s => {
+        const btn = document.createElement('button');
+        btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
+        btn.innerText = s;
+        btn.onclick = () => {
+          state.subRegion = s;
+          renderPage();
+          renderFilters();
+        };
+        subRow.appendChild(btn);
+      });
+
+      regionRow.appendChild(subRow);
+    }
+  }
 }
+
     function renderPage() {
         const container = document.getElementById('main-content');
         
