@@ -387,10 +387,12 @@ if (state.region !== 'ALL') items = items.filter(i => i.region === state.region)
 if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
 		
 if (state.category === 'spirits') {
-  // SPIRITS：ベース酒順 → 銘柄名順
   items.sort((a, b) => {
-    const ai = SPIRITS_BASE_ORDER.indexOf(a.sub_region);
-    const bi = SPIRITS_BASE_ORDER.indexOf(b.sub_region);
+    const sa = (a.sub_region || '').trim().toUpperCase();
+    const sb = (b.sub_region || '').trim().toUpperCase();
+
+    const ai = SPIRITS_BASE_ORDER.indexOf(sa);
+    const bi = SPIRITS_BASE_ORDER.indexOf(sb);
 
     if (ai !== -1 && bi !== -1) return ai - bi;
     if (ai !== -1) return -1;
@@ -400,6 +402,7 @@ if (state.category === 'spirits') {
     const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
     return an.localeCompare(bn);
   });
+}
 } else {
   // 既存の name / price ソート
   items.sort((a, b) => {
