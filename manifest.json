@@ -1,0 +1,21 @@
+﻿{
+  "name": "Bar SPEC Menu",
+  "short_name": "Bar SPEC",
+  "description": "Bar SPECのデジタルメニュー",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#1a1a1a",
+  "theme_color": "#c5a059",
+  "icons": [
+    {
+      "src": "images/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "images/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
