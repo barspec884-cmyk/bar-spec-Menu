@@ -1,19 +1,21 @@
 ﻿{
   "name": "Bar SPEC Menu",
-  "short_name": "Bar SPEC",
-  "description": "Bar SPECのデジタルメニュー",
-  "start_url": "index.html",
+  "short_name": "SPEC MENU",
+  "description": "Bar SPEC Customer Menu",
+  "start_url": "/login.html",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#1a1a1a",
-  "theme_color": "#c5a059",
+  "orientation": "portrait",
+  "background_color": "#0e0c0a",
+  "theme_color": "#0e0c0a",
   "icons": [
     {
-      "src": "images/logo.png",
+      "src": "/icon-192.png",
       "sizes": "192x192",
       "type": "image/png"
     },
     {
-      "src": "images/logo.png",
+      "src": "/icon-512.png",
       "sizes": "512x512",
       "type": "image/png"
     }

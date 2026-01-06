@@ -2,9 +2,19 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Bar SPEC - Login</title>
-    <style>
+
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Bar SPEC - Login</title>
+
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#1a1a1a">
+
+<!-- iPad 対策（そのままでOK） -->
+<link rel="apple-touch-icon" href="/icon-180.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<style>
         body { background: #1a1a1a; color: #fff; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
         .login-box { background: #252525; padding: 40px; border-radius: 12px; border-top: 3px solid #d4af37; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); width: 300px; }
         
@@ -70,5 +80,11 @@
             }
         }
     </script>
+	<script>
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("/sw.js");
+}
+</script>
+
 </body>
 </html>
