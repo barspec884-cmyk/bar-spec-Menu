@@ -26,7 +26,17 @@
         .header { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .page-title { margin: 0; font-size: 1.6rem; color: var(--accent-gold); font-family: "YuMincho", serif; }
         .lang-btns { display: flex; gap: 4px; }
-        .lang-btn { background: #333; border: none; color: #888; padding: 5px 10px; cursor: pointer; border-radius: 4px; font-size: 0.7rem; }
+/* .lang-btn の padding と font-size を微調整 */
+.lang-btn { 
+    background: #333; 
+    border: none; 
+    color: #888; 
+    padding: 5px 8px; /* 左右を 10px から 8px に少し詰めました */
+    cursor: pointer; 
+    border-radius: 4px; 
+    font-size: 0.65rem; /* 0.7rem から 0.65rem に少し小さくしました */
+    white-space: nowrap; /* 文字がボタン内で改行されるのを防ぎます */
+}
         .lang-btn.active { background: var(--accent-gold); color: #000; }
 
         /* フィルター・ソートバー */
@@ -80,13 +90,13 @@
 <main class="main-area">
     <div class="header">
         <h2 class="page-title" id="page-title">MENU</h2>
-        <div class="lang-btns">
-            <button class="lang-btn active" onclick="setLang('jp')">JP</button>
-            <button class="lang-btn" onclick="setLang('en')">EN</button>
-            <button class="lang-btn" onclick="setLang('ko')">KO</button>
-            <button class="lang-btn" onclick="setLang('zh')">ZH</button>
-            <button class="lang-btn" onclick="setLang('es')">ES</button>
-        </div>
+<div class="lang-btns">
+    <button class="lang-btn active" data-lang="jp" onclick="setLang('jp')">日本語</button>
+    <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+    <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+    <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+    <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>
+</div>
     </div>
 
     <div class="filter-area" id="filter-area" style="display:none;">
@@ -129,13 +139,14 @@
 
     function moveSlide(n) { state.slideIndex += n; renderPage(); }
 
-    function setLang(l) {
-        state.lang = l;
-        document.querySelectorAll('.lang-btn').forEach(b => {
-            b.classList.toggle('active', b.textContent.trim().toLowerCase() === l);
-        });
-        renderPage();
-    }
+function setLang(l) {
+    state.lang = l;
+    document.querySelectorAll('.lang-btn').forEach(b => {
+        // ボタンの文字ではなく「data-lang」という属性を見て色を切り替えるように変更
+        b.classList.toggle('active', b.getAttribute('data-lang') === l);
+    });
+    renderPage();
+}
 
     function toggleSort(key) {
         if (state.sort.key === key) state.sort.direction *= -1;
