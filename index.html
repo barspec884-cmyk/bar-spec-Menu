@@ -40,16 +40,14 @@
         .lang-btn.active { background: var(--accent-gold); color: #000; }
 
         /* ===== スタッフ用隠しボタン（ダブルタップ用） ===== */
-        .staff-btn {
-            background: transparent;
-            border: none;
-            color: #333;       /* 背景の黒に近い色にして隠す */
-            font-size: 0.8rem;
-            padding: 10px;
-            cursor: pointer;
-            opacity: 0.2;       /* ほとんど透明にする */
-            transition: opacity 0.3s;
-        }
+/* 一時的に見やすくする設定 */
+.staff-btn {
+    background: rgba(197, 160, 89, 0.3); /* ゴールドの薄い背景をつける */
+    border: 1px solid #c5a059;          /* ゴールドの枠線をつける */
+    color: #fff;                        /* アイコンを白にする */
+    opacity: 1.0;                       /* 透明度をなくす */
+    font-size: 1.2rem;                  /* 少し大きくする */
+}
         .staff-btn:active {
             color: var(--accent-gold);
             opacity: 1;
