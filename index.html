@@ -25,19 +25,35 @@
         .main-area { flex: 1; background-color: var(--bg-main); display: flex; flex-direction: column; overflow: hidden; }
         .header { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
         .page-title { margin: 0; font-size: 1.6rem; color: var(--accent-gold); font-family: "YuMincho", serif; }
+        
         .lang-btns { display: flex; gap: 4px; }
-/* .lang-btn の padding と font-size を微調整 */
-.lang-btn { 
-    background: #333; 
-    border: none; 
-    color: #888; 
-    padding: 5px 8px; /* 左右を 10px から 8px に少し詰めました */
-    cursor: pointer; 
-    border-radius: 4px; 
-    font-size: 0.65rem; /* 0.7rem から 0.65rem に少し小さくしました */
-    white-space: nowrap; /* 文字がボタン内で改行されるのを防ぎます */
-}
+        .lang-btn { 
+            background: #333; 
+            border: none; 
+            color: #888; 
+            padding: 5px 8px; 
+            cursor: pointer; 
+            border-radius: 4px; 
+            font-size: 0.65rem; 
+            white-space: nowrap; 
+        }
         .lang-btn.active { background: var(--accent-gold); color: #000; }
+
+        /* ===== スタッフ用隠しボタン（ダブルタップ用） ===== */
+        .staff-btn {
+            background: transparent;
+            border: none;
+            color: #333;       /* 背景の黒に近い色にして隠す */
+            font-size: 0.8rem;
+            padding: 10px;
+            cursor: pointer;
+            opacity: 0.2;       /* ほとんど透明にする */
+            transition: opacity 0.3s;
+        }
+        .staff-btn:active {
+            color: var(--accent-gold);
+            opacity: 1;
+        }
 
         /* フィルター・ソートバー */
         .filter-area { padding: 10px 30px; background: #2a2a2a; border-bottom: 1px solid #333; display: flex; flex-direction: column; gap: 8px; }
@@ -90,13 +106,16 @@
 <main class="main-area">
     <div class="header">
         <h2 class="page-title" id="page-title">MENU</h2>
-<div class="lang-btns">
-    <button class="lang-btn active" data-lang="jp" onclick="setLang('jp')">日本語</button>
-    <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
-    <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
-    <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
-    <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>
-</div>
+        
+        <button id="staff-btn" class="staff-btn">⚙</button>
+
+        <div class="lang-btns">
+            <button class="lang-btn active" data-lang="jp" onclick="setLang('jp')">日本語</button>
+            <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+            <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+            <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+            <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>
+        </div>
     </div>
 
     <div class="filter-area" id="filter-area" style="display:none;">
@@ -121,9 +140,32 @@
 
 <script src="menu_data.js"></script>
 <script>
+    // ログインチェック
     if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
 
+    // --- スタッフ用ダブルタップ処理 ---
+    let lastTap = 0;
+    const staffBtn = document.getElementById('staff-btn');
+
+    staffBtn.addEventListener('click', function(e) {
+        const now = Date.now();
+        const delta = now - lastTap;
+        if (delta < 300 && delta > 0) {
+            openStaffMenu();
+            e.preventDefault();
+        }
+        lastTap = now;
+    });
+
+    function openStaffMenu() {
+        if (!confirm("スタッフ操作メニューを開きますか？")) return;
+        alert("スタッフメニュー（閉店モード等）を起動します");
+    }
+
+    // --- メインロジック ---
     let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
+    
+    // 定数・ラベル定義
     const COUNTRY_ORDER = ["JAPANESE", "SCOTCH", "IRISH", "AMERICAN", "CANADIAN"];
     const SCOTCH_AREA_ORDER = ["SPEYSIDE", "ISLAY", "ISLANDS", "HIGHLAND", "LOWLAND", "CAMPBELTOWN"];
     const SPIRITS_BASE_ORDER = ["GIN", "VODKA", "RUM", "TEQUILA", "LIQUEUR", "BRANDY", "SHOCHU"];
@@ -132,21 +174,20 @@
     const labels = {
         jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "MOCKTAIL", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
         en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "MOCKTAIL", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
-        ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일", nonal: "목테일", food: "푸드", topic: "토픽", flight: "테이스팅 플ライ트", knowledge: "지식", map: "지도" },
+        ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일", nonal: "목테일", food: "푸드", topic: "토픽", flight: "테이스팅 플ライト", knowledge: "지식", map: "지도" },
         zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒", nonal: "无酒精鸡尾酒", food: "餐食", topic: "主题", flight: "品鉴套餐", knowledge: "知识", map: "地图" },
         es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", cocktail: " Cóctel ", nonal: " Cóctel sin alcohol ", food: "Comida", topic: "Tema", flight: "Vuelo de degustación", knowledge: "Conocimiento", map: "Mapa" }
     };
 
     function moveSlide(n) { state.slideIndex += n; renderPage(); }
 
-function setLang(l) {
-    state.lang = l;
-    document.querySelectorAll('.lang-btn').forEach(b => {
-        // ボタンの文字ではなく「data-lang」という属性を見て色を切り替えるように変更
-        b.classList.toggle('active', b.getAttribute('data-lang') === l);
-    });
-    renderPage();
-}
+    function setLang(l) {
+        state.lang = l;
+        document.querySelectorAll('.lang-btn').forEach(b => {
+            b.classList.toggle('active', b.getAttribute('data-lang') === l);
+        });
+        renderPage();
+    }
 
     function toggleSort(key) {
         if (state.sort.key === key) state.sort.direction *= -1;
@@ -180,6 +221,7 @@ function setLang(l) {
         if (note && note.trim() !== "") { showModal(name, note); }
     }
 
+    // フィルタ・レンダリング等の関数 (renderFilters, renderPage) は以前のロジックを継承
     function renderFilters() {
         const filterArea = document.getElementById('filter-area');
         const regionRow = document.getElementById('region-btns');
@@ -337,10 +379,8 @@ function setLang(l) {
             </div>`;
         });
     }
-</script>
 
-<script>
-    // サービスワーカーの登録 (PWA用)
+    // サービスワーカー登録
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
             navigator.serviceWorker.register('sw.js').then((reg) => {
