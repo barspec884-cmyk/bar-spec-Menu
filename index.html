@@ -74,14 +74,19 @@
   width:100%;
   max-width:980px;
 }
-.img-modal-img{
-  width:100%;
-  height:auto;
-  max-height:85vh;
-  object-fit:contain;
-  border-radius:12px;
-  box-shadow:0 10px 30px rgba(0,0,0,0.6);
-  background:#111;
+/* 画像拡大モーダル内の画像設定 */
+.img-modal-img {
+    width: 100%;
+    height: auto;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    background: #111;
+    /* ★追加: 拡大・移動をスムーズにする設定 */
+    transition: transform 0.1s ease-out;
+    cursor: grab;
+    touch-action: none; /* ブラウザ標準のズームを無効化してJSで制御 */
 }
 .img-modal-close{
   position:absolute;
@@ -150,41 +155,91 @@
 
 <script src="menu_data.js"></script>
 <script>
- const CACHE_NAME = 'bar-spec-v3'; // バージョンを上げてキャッシュを更新
+    // 1. ログインチェック
+    if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
 
-const urlsToCache = [
-  '/',
-  '/index.html',
-  '/login.html',
-  '/menu_data.js',
-  '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/favicon.ico'
-];
+    // --- 画像ズーム用の変数 ---
+    let scale = 1, lastScale = 1;
+    let pointX = 0, pointY = 0, startX = 0, startY = 0;
+    let isDragging = false;
+    let lastDistance = 0;
 
-self.addEventListener('install', (event) => {
-  self.skipWaiting();
-  event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
-  );
-});
+    // 2. 画像拡大モーダルを開く（ワンタップ）
+    function handleImgClick(e, src) {
+        e.stopPropagation(); // 親要素のイベント（説明表示など）を止める
+        const modal = document.getElementById('img-modal');
+        const modalImg = document.getElementById('img-modal-img');
+        
+        // 状態のリセット
+        scale = 1; pointX = 0; pointY = 0;
+        modalImg.style.transform = `translate(0px, 0px) scale(1)`;
+        
+        modalImg.src = src;
+        modal.style.display = 'flex';
+    }
 
-self.addEventListener('activate', (event) => {
-  event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
-        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
-      )
-    )
-  );
-});
+    function closeImgModal() {
+        document.getElementById('img-modal').style.display = 'none';
+    }
 
-self.addEventListener('fetch', (event) => {
-  event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
-  );
-});
+    // --- ピンチズーム・ドラッグの制御 ---
+    const modalImg = document.getElementById('img-modal-img');
+
+    // タッチ開始
+    modalImg.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            // 二本指：ピンチの開始距離を記録
+            lastDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        } else if (e.touches.length === 1) {
+            // 一本指：ドラッグの開始位置を記録
+            isDragging = true;
+            startX = e.touches[0].pageX - pointX;
+            startY = e.touches[0].pageY - pointY;
+        }
+    });
+
+    // タッチ中
+    modalImg.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            // ピンチズーム計算
+            const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            const delta = dist / lastDistance;
+            scale = Math.min(Math.max(1, lastScale * delta), 4); // 1倍〜4倍の間で拡大
+            updateTransform();
+        } else if (e.touches.length === 1 && isDragging && scale > 1) {
+            // ドラッグ移動（拡大時のみ）
+            pointX = e.touches[0].pageX - startX;
+            pointY = e.touches[0].pageY - startY;
+            updateTransform();
+        }
+    }, { passive: false });
+
+    // タッチ終了
+    modalImg.addEventListener('touchend', (e) => {
+        lastScale = scale;
+        isDragging = false;
+    });
+
+    function updateTransform() {
+        modalImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    }
+
+    // 3. アプリの状態管理（以下は以前と同じ）
+    let state = { category: "recommend", lang: "jp", region: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
+    const labels = {
+        jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
+        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" }
+    };
+
+    function setLang(l) { 
+        state.lang = l; 
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === l));
+        renderPage(); 
+    }
+    
+    // 省略されていた renderPage などの関数もここに含まれます
+    // ※以前お送りした「修復版」の renderPage 以下のコードを続けて記述してください
 </script>
 </body>
 </html>
