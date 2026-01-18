@@ -150,229 +150,41 @@
 
 <script src="menu_data.js"></script>
 <script>
- // 1. ログインチェック
-    if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
+ const CACHE_NAME = 'bar-spec-v3'; // バージョンを上げてキャッシュを更新
 
-    // 2. スタッフモード切り替えロジック
-    let lastTap = 0;
-    const staffBtn = document.getElementById('staff-btn');
-    staffBtn.addEventListener('click', function(e) {
-        const now = Date.now();
-        if ((now - lastTap) < 300) { openStaffMenu(); e.preventDefault(); }
-        lastTap = now;
-    });
+const urlsToCache = [
+  '/',
+  '/index.html',
+  '/login.html',
+  '/menu_data.js',
+  '/manifest.json',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/favicon.ico'
+];
 
-    function openStaffMenu() {
-        if (!confirm("スタッフモードに切り替えますか？")) return;
-        document.body.classList.toggle('staff-mode');
-    }
+self.addEventListener('install', (event) => {
+  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache))
+  );
+});
 
-    // 3. 画像拡大モーダルの制御（★追加）
-    let imgLastTap = 0;
-    function handleImgClick(e, src) {
-        e.stopPropagation(); // 親要素のクリックイベントを防止
-        const now = Date.now();
-        if ((now - imgLastTap) < 300) { 
-            openImgModal(src); 
-        }
-        imgLastTap = now;
-    }
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((keys) =>
+      Promise.all(
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
+      )
+    )
+  );
+});
 
-    function openImgModal(src) {
-        const modal = document.getElementById('img-modal');
-        const modalImg = document.getElementById('img-modal-img');
-        modalImg.src = src;
-        modal.style.display = 'flex';
-    }
-
-    function closeImgModal() {
-        document.getElementById('img-modal').style.display = 'none';
-    }
-
-    // 4. アプリの状態管理
-    let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
-    
-    const COUNTRY_ORDER = ["JAPANESE", "SCOTCH", "IRISH", "AMERICAN", "CANADIAN"];
-    const SCOTCH_AREA_ORDER = ["SPEYSIDE", "ISLAY", "ISLANDS", "HIGHLAND", "LOWLAND", "CAMPBELTOWN"];
-    const SPIRITS_BASE_ORDER = ["GIN", "VODKA", "RUM", "TEQUILA", "LIQUEUR", "BRANDY", "SHOCHU", "MOCKTAIL"];
-    const FOOD_ORDER = ["QUICK", "MEAL", "DESERT"];
-
-    const labels = {
-        jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
-        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
-        ko: { recommend: "추천", whisky: "위스키", spirits: "스피리츠", beer: "맥주", wine: "와인", cocktail: "칵테일", nonal: "소프트 드링크", food: "푸드", topic: "토픽", flight: "플ライト", knowledge: "지식", map: "지도" },
-        zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒", nonal: "软饮料", food: "餐食", topic: "主题", flight: "品鉴", knowledge: "知识", map: "地图" },
-        es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", cocktail: "Cóctel", nonal: "Refrescos", food: "Comida", topic: "Tema", flight: "Vuelo", knowledge: "Conocimiento", map: "Mapa" }
-    };
-
-    // 5. 各種イベントハンドラ
-    function moveSlide(n) { state.slideIndex += n; renderPage(); }
-    function setLang(l) { state.lang = l; document.querySelectorAll('.lang-btn').forEach(b => { b.classList.toggle('active', b.getAttribute('data-lang') === l); }); renderPage(); }
-    function toggleSort(key) { if (state.sort.key === key) state.sort.direction *= -1; else { state.sort.key = key; state.sort.direction = 1; } renderPage(); }
-    window.addEventListener('hashchange', () => { state.category = window.location.hash.replace('#','') || 'recommend'; state.region = "ALL"; state.subRegion = "ALL"; state.slideIndex = 0; renderFilters(); renderPage(); });
-    window.addEventListener('load', () => { state.category = window.location.hash.replace('#','') || 'recommend'; renderFilters(); renderPage(); });
-    
-    function showModal(name, note) { if(!note) return; document.getElementById('modal-title').innerText = name; document.getElementById('modal-body').innerHTML = note.replace(/\n/g, '<br>'); document.getElementById('modal-overlay').style.display = 'flex'; }
-    function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
-    function handleItemClick(el) { const name = el.getAttribute('data-name'); const note = el.getAttribute('data-note'); if (note && note.trim() !== "") { showModal(name, note); } }
-
-    // 6. フィルタ描画
-    function renderFilters() {
-        const filterArea = document.getElementById('filter-area');
-        const regionRow = document.getElementById('region-btns');
-        const items = menuData.filter(i => i.category === state.category);
-        const regionsRaw = [...new Set(items.map(i => i.region).filter(Boolean))];
-        const subRegionsRaw = [...new Set(items.map(i => i.sub_region).filter(Boolean))];
-
-        if (regionsRaw.length === 0 && subRegionsRaw.length === 0) { filterArea.style.display = 'none'; return; }
-        filterArea.style.display = 'flex';
-        regionRow.innerHTML = '';
-
-        if (regionsRaw.length > 0) {
-            let regions = regionsRaw.slice();
-            if (state.category === 'whisky') {
-                const inOrder = COUNTRY_ORDER.filter(r => regions.includes(r));
-                const rest = regions.filter(r => !COUNTRY_ORDER.includes(r)).sort();
-                regions = [...inOrder, ...rest];
-            } else { regions = regions.sort(); }
-            ['ALL', ...regions].forEach(r => {
-                const btn = document.createElement('button');
-                btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
-                btn.innerText = r;
-                btn.onclick = () => { state.region = r; state.subRegion = "ALL"; renderFilters(); renderPage(); };
-                regionRow.appendChild(btn);
-            });
-        } 
-        else if (['spirits', 'cocktail', 'nonal', 'food'].includes(state.category) && subRegionsRaw.length > 0) {
-            let subRegions = subRegionsRaw.slice();
-            if (state.category === 'food') {
-                const inOrder = FOOD_ORDER.filter(s => subRegions.includes(s));
-                const rest = subRegions.filter(s => !FOOD_ORDER.includes(s)).sort();
-                subRegions = [...inOrder, ...rest];
-            } else {
-                subRegions.sort((a, b) => {
-                    const indexA = SPIRITS_BASE_ORDER.indexOf(a.toUpperCase());
-                    const indexB = SPIRITS_BASE_ORDER.indexOf(b.toUpperCase());
-                    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB) || a.localeCompare(b);
-                });
-            }
-            ['ALL', ...subRegions].forEach(s => {
-                const btn = document.createElement('button');
-                btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
-                btn.innerText = s;
-                btn.onclick = () => { state.subRegion = s; renderPage(); renderFilters(); };
-                regionRow.appendChild(btn);
-            });
-            return;
-        } else { filterArea.style.display = 'none'; return; }
-
-        if (state.region !== 'ALL') {
-            const currentSubsRaw = [...new Set(items.filter(i => i.region === state.region).map(i => i.sub_region).filter(Boolean))];
-            let sortedSub = (state.category === 'whisky' && state.region === 'SCOTCH') 
-                ? [...SCOTCH_AREA_ORDER.filter(s => currentSubsRaw.includes(s)), ...currentSubsRaw.filter(s => !SCOTCH_AREA_ORDER.includes(s)).sort()]
-                : currentSubsRaw.slice().sort();
-
-            if (sortedSub.length > 0) {
-                const subRow = document.createElement('div');
-                subRow.className = 'region-row';
-                subRow.style.cssText = 'margin-top:8px; border-top:1px solid #444; padding-top:8px;';
-                ['ALL', ...sortedSub].forEach(s => {
-                    const btn = document.createElement('button');
-                    btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
-                    btn.innerText = s;
-                    btn.onclick = () => { state.subRegion = s; renderPage(); renderFilters(); };
-                    subRow.appendChild(btn);
-                });
-                regionRow.appendChild(subRow);
-            }
-        }
-    }
-
-    // 7. ページ描画メイン（★修正済み）
-    function renderPage() {
-        const container = document.getElementById('main-content');
-        document.querySelectorAll('.tab-link').forEach(l => {
-            if (l.id.startsWith('link-')) {
-                const cat = l.id.replace('link-','');
-                l.classList.toggle('active', cat === state.category);
-                l.innerText = (labels[state.lang] && labels[state.lang][cat]) || cat.toUpperCase();
-            }
-        });
-        document.getElementById('page-title').innerText = (labels[state.lang] && labels[state.lang][state.category]) || state.category.toUpperCase();
-        
-        let items = menuData.filter(i => i.category === state.category);
-
-        if (['knowledge', 'map', 'topic', 'flight'].includes(state.category)) {
-            document.getElementById('sort-bar').style.display = 'none';
-            document.getElementById('filter-area').style.display = 'none';
-            if (items.length === 0) { container.innerHTML = '<p style="text-align:center; padding-top:50px;">NO DATA</p>'; return; }
-            if (state.slideIndex >= items.length) state.slideIndex = 0;
-            if (state.slideIndex < 0) state.slideIndex = items.length - 1;
-            const item = items[state.slideIndex];
-            container.innerHTML = `
-                <div class="slider-wrapper">
-                    <h3 style="color:var(--accent-gold); font-size:1.4rem; margin-bottom:15px;">${item[`name_${state.lang}`] || item.name_jp}</h3>
-                    <div class="slider-container">
-                        <button class="nav-btn" onclick="moveSlide(-1)" ${items.length <= 1 ? 'disabled' : ''}>❮</button>
-                        <img src="${item.image}" class="slide-img" onerror="this.src='images/no-image.png'" onclick="handleImgClick(event, '${item.image}')">
-                        <button class="nav-btn" onclick="moveSlide(1)" ${items.length <= 1 ? 'disabled' : ''}>❯</button>
-                    </div>
-                    <p style="color:#ccc; margin-top:20px; line-height:1.6; max-width: 80%; margin-left: auto; margin-right: auto;">
-                        ${item[`desc_${state.lang}`] || item.desc_jp}
-                    </p>
-                    <div class="slide-counter">${state.slideIndex + 1} / ${items.length}</div>
-                </div>`;
-            return;
-        }
-
-        document.getElementById('sort-bar').style.display = 'flex';
-        if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
-        if (state.subRegion !== 'ALL') items = items.filter(i => i.sub_region === state.subRegion);
-        items.sort((a, b) => {
-            if (state.category === 'spirits' || state.category === 'cocktail') {
-                const ai = SPIRITS_BASE_ORDER.indexOf(String(a.sub_region || '').toUpperCase());
-                const bi = SPIRITS_BASE_ORDER.indexOf(String(b.sub_region || '').toUpperCase());
-                const diff = (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-                if (diff !== 0) return diff;
-            }
-            if (state.sort.key === 'price') return ((a.price || 0) - (b.price || 0)) * state.sort.direction;
-            const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
-            const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
-            return an.localeCompare(bn) * state.sort.direction;
-        });
-
-        document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
-        document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
-        container.innerHTML = items.length ? '' : '<p style="text-align:center; padding-top:50px; color:#555;">NO ITEMS</p>';
-
-        items.forEach(item => {
-            const name = item[`name_${state.lang}`] || item.name_jp;
-            const price = item.price ? `¥${item.price.toLocaleString()}` : '';
-            const note = item[`note_${state.lang}`] || item.note_jp || ""; 
-            const isSoldOut = item.sold_out === true;
-            
-            // ★ 画像に onclick="handleImgClick" を追加
-            const imgHtml = item.image 
-                ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')" onerror="this.src='images/no-image.png'">` 
-                : '';
-
-            container.innerHTML += `
-            <div class="item-entry" data-name="${name.replace(/"/g, '&quot;')}" data-note="${note.replace(/"/g, '&quot;')}" onclick="handleItemClick(this)" style="${note !== '' ? 'cursor:pointer;' : ''}">
-                <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
-                    ${imgHtml}
-                    <div>
-                        <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
-                        ${name} ${isSoldOut ? '<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>' : ''}
-                        </div>
-                        <div class="item-sub ${note !== '' ? 'has-note' : ''}" style="color:#888; font-size:0.8rem; margin-top:4px;">${item.name_en || ''}</div>
-                    </div>
-                </div>
-                <div class="item-price" style="${isSoldOut ? 'color:#555;' : ''}">${isSoldOut ? '---' : price}</div>
-            </div>`;
-        });
-    }
-
-    if ('serviceWorker' in navigator) { window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js'); }); }
+self.addEventListener('fetch', (event) => {
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
+  );
+});
 </script>
 </body>
 </html>

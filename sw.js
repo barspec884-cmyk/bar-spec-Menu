@@ -1,4 +1,4 @@
-﻿const CACHE_NAME = 'bar-spec-v2';
+﻿const CACHE_NAME = 'bar-spec-v3'; // バージョンを上げてキャッシュを更新
 
 const urlsToCache = [
   '/',
@@ -22,19 +22,14 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) =>
       Promise.all(
-        keys
-          .filter((key) => key !== CACHE_NAME)
-          .map((key) => caches.delete(key))
+        keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))
       )
     )
   );
 });
 
-// Fetchイベントの修正：ネットワークから取得し、失敗したらキャッシュを返す（基本構成）
 self.addEventListener('fetch', (event) => {
   event.respondWith(
-    fetch(event.request).catch(() => {
-      return caches.match(event.request);
-    })
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
