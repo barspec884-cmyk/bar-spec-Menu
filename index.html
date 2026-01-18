@@ -59,7 +59,41 @@
         body.staff-mode .tab-link { border-bottom: 1px solid #eee; color: #333; }
         body.staff-mode .header, body.staff-mode .filter-area, body.staff-mode .sort-bar, body.staff-mode .item-entry { border-bottom: 1px solid #ccc; }
         body.staff-mode .page-title { color: #000; }
-    </style>
+
+		/* 画像拡大モーダル */
+.img-modal-overlay{
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.9);
+  z-index:3000;
+  justify-content:center; align-items:center;
+  padding:16px;
+}
+.img-modal-box{
+  position:relative;
+  width:100%;
+  max-width:980px;
+}
+.img-modal-img{
+  width:100%;
+  height:auto;
+  max-height:85vh;
+  object-fit:contain;
+  border-radius:12px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.6);
+  background:#111;
+}
+.img-modal-close{
+  position:absolute;
+  top:-10px; right:-10px;
+  background:rgba(197,160,89,0.95);
+  border:none;
+  width:40px; height:40px;
+  border-radius:20px;
+  font-weight:bold;
+  cursor:pointer;
+}
+</style>
 </head>
 
 <body>
@@ -107,18 +141,19 @@
     <div class="content-scroll" id="main-content"></div>
 </main>
 
-<div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
-    <div class="modal-content">
-        <h2 id="modal-title" style="color:var(--accent-gold); margin-top:0;"></h2>
-        <div id="modal-body" style="color:#ccc; line-height:1.8;"></div>
-        <button onclick="closeModal()" style="margin-top:20px; background:var(--accent-gold); border:none; padding:10px 20px; border-radius:4px; font-weight:bold;">閉じる</button>
-    </div>
+<div id="img-modal" class="img-modal-overlay" onclick="closeImgModal()">
+  <div class="img-modal-box" onclick="event.stopPropagation()">
+    <button class="img-modal-close" onclick="closeImgModal()">×</button>
+    <img id="img-modal-img" class="img-modal-img" src="" alt="">
+  </div>
 </div>
 
 <script src="menu_data.js"></script>
 <script>
+ // 1. ログインチェック
     if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
 
+    // 2. スタッフモード切り替えロジック
     let lastTap = 0;
     const staffBtn = document.getElementById('staff-btn');
     staffBtn.addEventListener('click', function(e) {
@@ -132,11 +167,33 @@
         document.body.classList.toggle('staff-mode');
     }
 
+    // 3. 画像拡大モーダルの制御（★追加）
+    let imgLastTap = 0;
+    function handleImgClick(e, src) {
+        e.stopPropagation(); // 親要素のクリックイベントを防止
+        const now = Date.now();
+        if ((now - imgLastTap) < 300) { 
+            openImgModal(src); 
+        }
+        imgLastTap = now;
+    }
+
+    function openImgModal(src) {
+        const modal = document.getElementById('img-modal');
+        const modalImg = document.getElementById('img-modal-img');
+        modalImg.src = src;
+        modal.style.display = 'flex';
+    }
+
+    function closeImgModal() {
+        document.getElementById('img-modal').style.display = 'none';
+    }
+
+    // 4. アプリの状態管理
     let state = { category: "recommend", lang: "jp", region: "ALL", subRegion: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
     
     const COUNTRY_ORDER = ["JAPANESE", "SCOTCH", "IRISH", "AMERICAN", "CANADIAN"];
     const SCOTCH_AREA_ORDER = ["SPEYSIDE", "ISLAY", "ISLANDS", "HIGHLAND", "LOWLAND", "CAMPBELTOWN"];
-    // MOCKTAILを最後に追加
     const SPIRITS_BASE_ORDER = ["GIN", "VODKA", "RUM", "TEQUILA", "LIQUEUR", "BRANDY", "SHOCHU", "MOCKTAIL"];
     const FOOD_ORDER = ["QUICK", "MEAL", "DESERT"];
 
@@ -148,15 +205,18 @@
         es: { recommend: "Recomendado", whisky: "Whisky", spirits: "Licores", beer: "Cerveza", wine: "Vino", cocktail: "Cóctel", nonal: "Refrescos", food: "Comida", topic: "Tema", flight: "Vuelo", knowledge: "Conocimiento", map: "Mapa" }
     };
 
+    // 5. 各種イベントハンドラ
     function moveSlide(n) { state.slideIndex += n; renderPage(); }
     function setLang(l) { state.lang = l; document.querySelectorAll('.lang-btn').forEach(b => { b.classList.toggle('active', b.getAttribute('data-lang') === l); }); renderPage(); }
     function toggleSort(key) { if (state.sort.key === key) state.sort.direction *= -1; else { state.sort.key = key; state.sort.direction = 1; } renderPage(); }
     window.addEventListener('hashchange', () => { state.category = window.location.hash.replace('#','') || 'recommend'; state.region = "ALL"; state.subRegion = "ALL"; state.slideIndex = 0; renderFilters(); renderPage(); });
     window.addEventListener('load', () => { state.category = window.location.hash.replace('#','') || 'recommend'; renderFilters(); renderPage(); });
+    
     function showModal(name, note) { if(!note) return; document.getElementById('modal-title').innerText = name; document.getElementById('modal-body').innerHTML = note.replace(/\n/g, '<br>'); document.getElementById('modal-overlay').style.display = 'flex'; }
     function closeModal() { document.getElementById('modal-overlay').style.display = 'none'; }
     function handleItemClick(el) { const name = el.getAttribute('data-name'); const note = el.getAttribute('data-note'); if (note && note.trim() !== "") { showModal(name, note); } }
 
+    // 6. フィルタ描画
     function renderFilters() {
         const filterArea = document.getElementById('filter-area');
         const regionRow = document.getElementById('region-btns');
@@ -228,6 +288,7 @@
         }
     }
 
+    // 7. ページ描画メイン（★修正済み）
     function renderPage() {
         const container = document.getElementById('main-content');
         document.querySelectorAll('.tab-link').forEach(l => {
@@ -253,7 +314,7 @@
                     <h3 style="color:var(--accent-gold); font-size:1.4rem; margin-bottom:15px;">${item[`name_${state.lang}`] || item.name_jp}</h3>
                     <div class="slider-container">
                         <button class="nav-btn" onclick="moveSlide(-1)" ${items.length <= 1 ? 'disabled' : ''}>❮</button>
-                        <img src="${item.image}" class="slide-img" onerror="this.src='images/no-image.png'">
+                        <img src="${item.image}" class="slide-img" onerror="this.src='images/no-image.png'" onclick="handleImgClick(event, '${item.image}')">
                         <button class="nav-btn" onclick="moveSlide(1)" ${items.length <= 1 ? 'disabled' : ''}>❯</button>
                     </div>
                     <p style="color:#ccc; margin-top:20px; line-height:1.6; max-width: 80%; margin-left: auto; margin-right: auto;">
@@ -289,10 +350,16 @@
             const price = item.price ? `¥${item.price.toLocaleString()}` : '';
             const note = item[`note_${state.lang}`] || item.note_jp || ""; 
             const isSoldOut = item.sold_out === true;
+            
+            // ★ 画像に onclick="handleImgClick" を追加
+            const imgHtml = item.image 
+                ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')" onerror="this.src='images/no-image.png'">` 
+                : '';
+
             container.innerHTML += `
             <div class="item-entry" data-name="${name.replace(/"/g, '&quot;')}" data-note="${note.replace(/"/g, '&quot;')}" onclick="handleItemClick(this)" style="${note !== '' ? 'cursor:pointer;' : ''}">
                 <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
-                    ${item.image ? `<img src="${item.image}" class="item-img">` : ''}
+                    ${imgHtml}
                     <div>
                         <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
                         ${name} ${isSoldOut ? '<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>' : ''}
