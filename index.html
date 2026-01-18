@@ -163,69 +163,46 @@
     let pointX = 0, pointY = 0, startX = 0, startY = 0;
     let isDragging = false;
     let lastDistance = 0;
+    const modalImg = document.getElementById('img-modal-img');
 
-    // 2. 画像拡大モーダルを開く（ワンタップ）
+    // 2. 画像拡大モーダル制御（ワンタップ & ピンチズーム）
     function handleImgClick(e, src) {
-        e.stopPropagation(); // 親要素のイベント（説明表示など）を止める
+        e.stopPropagation(); // 親要素のクリックを防止
         const modal = document.getElementById('img-modal');
-        const modalImg = document.getElementById('img-modal-img');
-        
-        // 状態のリセット
-        scale = 1; pointX = 0; pointY = 0;
+        scale = 1; pointX = 0; pointY = 0; lastScale = 1; // リセット
         modalImg.style.transform = `translate(0px, 0px) scale(1)`;
-        
         modalImg.src = src;
         modal.style.display = 'flex';
     }
 
-    function closeImgModal() {
-        document.getElementById('img-modal').style.display = 'none';
-    }
+    function closeImgModal() { document.getElementById('img-modal').style.display = 'none'; }
 
-    // --- ピンチズーム・ドラッグの制御 ---
-    const modalImg = document.getElementById('img-modal-img');
-
-    // タッチ開始
+    // ピンチ・ドラッグ操作の登録
     modalImg.addEventListener('touchstart', (e) => {
         if (e.touches.length === 2) {
-            // 二本指：ピンチの開始距離を記録
             lastDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
         } else if (e.touches.length === 1) {
-            // 一本指：ドラッグの開始位置を記録
             isDragging = true;
             startX = e.touches[0].pageX - pointX;
             startY = e.touches[0].pageY - pointY;
         }
     });
 
-    // タッチ中
     modalImg.addEventListener('touchmove', (e) => {
         e.preventDefault();
         if (e.touches.length === 2) {
-            // ピンチズーム計算
             const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
-            const delta = dist / lastDistance;
-            scale = Math.min(Math.max(1, lastScale * delta), 4); // 1倍〜4倍の間で拡大
-            updateTransform();
+            scale = Math.min(Math.max(1, lastScale * (dist / lastDistance)), 4);
         } else if (e.touches.length === 1 && isDragging && scale > 1) {
-            // ドラッグ移動（拡大時のみ）
             pointX = e.touches[0].pageX - startX;
             pointY = e.touches[0].pageY - startY;
-            updateTransform();
         }
+        modalImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
     }, { passive: false });
 
-    // タッチ終了
-    modalImg.addEventListener('touchend', (e) => {
-        lastScale = scale;
-        isDragging = false;
-    });
+    modalImg.addEventListener('touchend', () => { lastScale = scale; isDragging = false; });
 
-    function updateTransform() {
-        modalImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
-    }
-
-    // 3. アプリの状態管理（以下は以前と同じ）
+    // 3. アプリの状態管理
     let state = { category: "recommend", lang: "jp", region: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
     const labels = {
         jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
@@ -237,9 +214,75 @@
         document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === l));
         renderPage(); 
     }
-    
-    // 省略されていた renderPage などの関数もここに含まれます
-    // ※以前お送りした「修復版」の renderPage 以下のコードを続けて記述してください
+
+    function toggleSort(key) { 
+        if (state.sort.key === key) state.sort.direction *= -1; 
+        else { state.sort.key = key; state.sort.direction = 1; } 
+        renderPage(); 
+    }
+
+    window.addEventListener('hashchange', () => {
+        state.category = window.location.hash.replace('#','') || 'recommend';
+        state.region = "ALL";
+        renderFilters(); renderPage();
+    });
+
+    window.addEventListener('load', () => {
+        state.category = window.location.hash.replace('#','') || 'recommend';
+        renderFilters(); renderPage();
+    });
+
+    // 4. 描画メイン
+    function renderFilters() {
+        const regionRow = document.getElementById('region-btns');
+        const items = menuData.filter(i => i.category === state.category);
+        const regions = [...new Set(items.map(i => i.region).filter(Boolean))];
+        document.getElementById('filter-area').style.display = regions.length > 0 ? 'flex' : 'none';
+        regionRow.innerHTML = ['ALL', ...regions.sort()].map(r => 
+            `<button class="filter-btn ${state.region===r?'active':''}" onclick="state.region='${r}';renderFilters();renderPage();">${r}</button>`
+        ).join('');
+    }
+
+    function renderPage() {
+        const container = document.getElementById('main-content');
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.toggle('active', l.id === 'link-' + state.category));
+        document.getElementById('page-title').innerText = labels[state.lang][state.category] || state.category.toUpperCase();
+        
+        let items = menuData.filter(i => i.category === state.category);
+        if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
+
+        if (['knowledge', 'map', 'topic', 'flight'].includes(state.category)) {
+            document.getElementById('sort-bar').style.display = 'none';
+            const item = items[state.slideIndex] || items[0];
+            if (!item) return;
+            container.innerHTML = `<div class="slider-wrapper">
+                <h3>${item.name_jp}</h3>
+                <div class="slider-container">
+                    <img src="${item.image}" class="slide-img" onclick="handleImgClick(event, '${item.image}')">
+                </div>
+                <p>${item.desc_jp || ''}</p>
+            </div>`;
+        } else {
+            document.getElementById('sort-bar').style.display = 'flex';
+            items.sort((a,b) => (state.sort.key === 'price' ? a.price - b.price : a.name_jp.localeCompare(b.name_jp)) * state.sort.direction);
+            container.innerHTML = items.map(item => {
+                const isSoldOut = item.sold_out === true;
+                return `<div class="item-entry">
+                    <div class="item-card" style="${isSoldOut ? 'opacity:0.5' : ''}">
+                        ${item.image ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')">` : ''}
+                        <div>
+                            <div>${item.name_jp} ${isSoldOut ? '<span style="color:#d9534f; font-weight:bold;">SOLD OUT</span>' : ''}</div>
+                            <div style="font-size:0.8rem; color:#888;">${item.name_en || ''}</div>
+                        </div>
+                    </div>
+                    <div class="item-price">${isSoldOut ? '---' : '¥' + item.price.toLocaleString()}</div>
+                </div>`;
+            }).join('');
+        }
+    }
+
+    // サービスワーカーを登録する命令（中身を書くのではなく、sw.js を呼び出す）
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
 </html>
