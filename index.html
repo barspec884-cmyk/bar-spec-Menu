@@ -88,15 +88,31 @@
     cursor: grab;
     touch-action: none; /* ブラウザ標準のズームを無効化してJSで制御 */
 }
-.img-modal-close{
-  position:absolute;
-  top:-10px; right:-10px;
-  background:rgba(197,160,89,0.95);
-  border:none;
-  width:40px; height:40px;
-  border-radius:20px;
-  font-weight:bold;
-  cursor:pointer;
+/* 画像拡大モーダルの閉じるボタンを修正 */
+.img-modal-close {
+    position: absolute;
+    top: 10px;       /* 画像の少し内側に配置 */
+    right: 10px;
+    width: 44px;     /* 指で押しやすいサイズ（44px以上が推奨） */
+    height: 44px;
+    background: rgba(197, 160, 89, 0.9); /* Bar SPECのゴールド */
+    color: #000;
+    border: none;
+    border-radius: 22px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;     /* ★重要: 画像(1)よりも高い数値にして最前面へ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* 念のため画像側の重なり順を低く設定 */
+.img-modal-img {
+    z-index: 1;      /* ボタンより下に配置 */
+    position: relative;
 }
 </style>
 </head>
