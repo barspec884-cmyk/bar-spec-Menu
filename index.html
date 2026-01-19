@@ -219,10 +219,16 @@
     modalImg.addEventListener('touchend', () => { lastScale = scale; isDragging = false; });
 
     // 3. アプリの状態管理
+    // 3. アプリの状態管理
     let state = { category: "recommend", lang: "jp", region: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
+
+    // ★修正：全ての言語のラベルを定義（エラー防止）
     const labels = {
-        jp: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
-        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" }
+        jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "スピリッツ", beer: "ビール", wine: "ワイン", cocktail: "カクテル", nonal: "ソフトドリンク", food: "フード", topic: "トピック", flight: "フライト", knowledge: "知識", map: "マップ" },
+        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
+        ko: { recommend: "추천", whisky: "위스키", spirits: "증류주", beer: "맥주", wine: "와인", cocktail: "칵테일", nonal: "소프트 드リンク", food: "음식", topic: "토픽", flight: "플ライト", knowledge: "지식", map: "지도" },
+        zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒", nonal: "软饮料", food: "美食", topic: "话题", flight: "飞行套餐", knowledge: "知识", map: "地图" },
+        es: { recommend: "RECOMENDADO", whisky: "WHISKY", spirits: "DESTILADOS", beer: "CERVEZA", wine: "VINO", cocktail: "CÓCTEL", nonal: "REFRESCOS", food: "COMIDA", topic: "TEMA", flight: "VUELO", knowledge: "CONOCIMIENTO", map: "MAPA" }
     };
 
     function setLang(l) { 
@@ -262,6 +268,8 @@
     function renderPage() {
         const container = document.getElementById('main-content');
         document.querySelectorAll('.tab-link').forEach(l => l.classList.toggle('active', l.id === 'link-' + state.category));
+        
+        // 言語に応じたページタイトルを表示
         document.getElementById('page-title').innerText = labels[state.lang][state.category] || state.category.toUpperCase();
         
         let items = menuData.filter(i => i.category === state.category);
@@ -271,24 +279,35 @@
             document.getElementById('sort-bar').style.display = 'none';
             const item = items[state.slideIndex] || items[0];
             if (!item) return;
+
+            // ★修正：スライダー内の名前と説明を動的に切り替え
+            const displayName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];
+            const displayDesc = item['desc_' + state.lang] || item['desc_en'] || item['desc_jp'] || '';
+
             container.innerHTML = `<div class="slider-wrapper">
-                <h3>${item.name_jp}</h3>
+                <h3>${displayName}</h3>
                 <div class="slider-container">
                     <img src="${item.image}" class="slide-img" onclick="handleImgClick(event, '${item.image}')">
                 </div>
-                <p>${item.desc_jp || ''}</p>
+                <p>${displayDesc}</p>
             </div>`;
         } else {
             document.getElementById('sort-bar').style.display = 'flex';
             items.sort((a,b) => (state.sort.key === 'price' ? a.price - b.price : a.name_jp.localeCompare(b.name_jp)) * state.sort.direction);
+            
             container.innerHTML = items.map(item => {
                 const isSoldOut = item.sold_out === true;
+                
+                // ★修正：メインの名前と言語別サブ名を動的に取得
+                const mainName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];
+                const subName = (state.lang === 'jp') ? item['name_en'] : item['name_jp'];
+
                 return `<div class="item-entry">
                     <div class="item-card" style="${isSoldOut ? 'opacity:0.5' : ''}">
                         ${item.image ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')">` : ''}
                         <div>
-                            <div>${item.name_jp} ${isSoldOut ? '<span style="color:#d9534f; font-weight:bold;">SOLD OUT</span>' : ''}</div>
-                            <div style="font-size:0.8rem; color:#888;">${item.name_en || ''}</div>
+                            <div>${mainName} ${isSoldOut ? '<span style="color:#d9534f; font-weight:bold;">SOLD OUT</span>' : ''}</div>
+                            <div style="font-size:0.8rem; color:#888;">${subName || ''}</div>
                         </div>
                     </div>
                     <div class="item-price">${isSoldOut ? '---' : '¥' + item.price.toLocaleString()}</div>
@@ -296,7 +315,6 @@
             }).join('');
         }
     }
-
     // サービスワーカーを登録する命令（中身を書くのではなく、sw.js を呼び出す）
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 </script>
