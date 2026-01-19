@@ -212,6 +212,11 @@
     }, { passive: false });
 
     modalImg.addEventListener('touchend', () => { lastScale = scale; isDragging = false; });
+   // --- 並び順定義（未定義エラー防止） ---
+const COUNTRY_ORDER = ['JAPAN','SCOTCH','USA','IRELAND','CANADA'];
+const SCOTCH_AREA_ORDER = ['ISLAY','SPEYSIDE','HIGHLAND','LOWLAND','CAMPBELTOWN','ISLANDS'];
+const SPIRITS_BASE_ORDER = ['GIN','VODKA','RUM','TEQUILA','WHISKY','BRANDY','LIQUEUR'];
+const FOOD_ORDER = [];
 
     // 3. アプリの状態管理
 let state = {
