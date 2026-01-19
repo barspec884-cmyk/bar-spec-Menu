@@ -136,7 +136,6 @@
     <a href="#map" class="tab-link" id="link-map">MAP</a>
     <a href="https://whisky-matrix.vercel.app/" class="tab-link" target="_blank" style="color: var(--accent-gold); border-top: 1px solid #444; margin-top: 10px;">Whisky Matrix ↗</a>
 </nav>
-
 <main class="main-area">
     <div class="header">
         <h2 class="page-title" id="page-title">MENU</h2>
@@ -149,7 +148,6 @@
             <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>
         </div>
     </div>
-
     <div class="filter-area" id="filter-area" style="display:none;">
         <div class="region-row" id="region-btns"></div>
     </div>
@@ -158,10 +156,8 @@
         <div onclick="toggleSort('name')" style="cursor:pointer;">銘柄名 <span id="icon-name">▲</span></div>
         <div onclick="toggleSort('price')" style="cursor:pointer;">価格 <span id="icon-price">⇅</span></div>
     </div>
-
     <div class="content-scroll" id="main-content"></div>
 </main>
-
 <div id="img-modal" class="img-modal-overlay" onclick="closeImgModal()">
   <div class="img-modal-box" onclick="event.stopPropagation()">
     <button class="img-modal-close" onclick="closeImgModal()">×</button>
@@ -190,7 +186,6 @@
         modalImg.src = src;
         modal.style.display = 'flex';
     }
-
     function closeImgModal() { document.getElementById('img-modal').style.display = 'none'; }
 
     // ピンチ・ドラッグ操作の登録
@@ -219,9 +214,14 @@
     modalImg.addEventListener('touchend', () => { lastScale = scale; isDragging = false; });
 
     // 3. アプリの状態管理
-    // 3. アプリの状態管理
-    let state = { category: "recommend", lang: "jp", region: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
-
+let state = {
+  category: "recommend",
+  lang: "jp",
+  region: "ALL",
+  subRegion: "ALL",   // ← 追加
+  sort: { key: 'name', direction: 1 },
+  slideIndex: 0
+};
     // ★修正：全ての言語のラベルを定義（エラー防止）
     const labels = {
         jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "スピリッツ", beer: "ビール", wine: "ワイン", cocktail: "カクテル", nonal: "ソフトドリンク", food: "フード", topic: "トピック", flight: "フライト", knowledge: "知識", map: "マップ" },
@@ -243,11 +243,13 @@
         renderPage(); 
     }
 
-    window.addEventListener('hashchange', () => {
-        state.category = window.location.hash.replace('#','') || 'recommend';
-        state.region = "ALL";
-        renderFilters(); renderPage();
-    });
+window.addEventListener('hashchange', () => {
+  state.category = window.location.hash.replace('#','') || 'recommend';
+  state.region = "ALL";
+  state.subRegion = "ALL";   // ← 追加
+  renderFilters();
+  renderPage();
+});
 
     window.addEventListener('load', () => {
         state.category = window.location.hash.replace('#','') || 'recommend';
@@ -269,7 +271,6 @@
             filterArea.style.display = 'none';
             return;
         }
-
         filterArea.style.display = 'flex';
         regionRow.innerHTML = '';
 
@@ -294,7 +295,6 @@
             });
             regionRow.appendChild(parentRow);
         } 
-        
         // --- B. 子カテゴリー（Sub Region / Base）の表示 ---
         // 1. ウイスキーなどで特定のRegion（例：SCOTCH）が選ばれた時の2段目
         // 2. またはカクテル、スピリッツなどで最初から1段目として出す場合
@@ -339,7 +339,6 @@
             regionRow.appendChild(subRow);
         }
     }
-
     // 5. ページ描画メイン
     function renderPage() {
         const container = document.getElementById('main-content');
@@ -350,7 +349,6 @@
             l.classList.toggle('active', cat === state.category);
             l.innerText = (labels[state.lang] && labels[state.lang][cat]) || cat.toUpperCase();
         });
-        
         document.getElementById('page-title').innerText = (labels[state.lang] && labels[state.lang][state.category]) || state.category.toUpperCase();
         
         let items = menuData.filter(i => i.category === state.category);
@@ -378,7 +376,6 @@
                 </div>`;
             return;
         }
-
         // リスト形式
         document.getElementById('sort-bar').style.display = 'flex';
         
@@ -388,7 +385,6 @@
             // sub_region または base でフィルタリング
             items = items.filter(i => i.sub_region === state.subRegion || i.base === state.subRegion);
         }
-
         // 並び替え処理
         items.sort((a, b) => {
             if (state.category === 'spirits' || state.category === 'cocktail') {
@@ -404,7 +400,6 @@
             const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
             return an.localeCompare(bn) * state.sort.direction;
         });
-
         // ソートアイコン更新
         document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
         document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
