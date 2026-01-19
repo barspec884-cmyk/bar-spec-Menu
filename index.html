@@ -254,100 +254,192 @@
         renderFilters(); renderPage();
     });
 
-// 4. 描画メイン
+// 4. フィルター描画メイン
     function renderFilters() {
+        const filterArea = document.getElementById('filter-area');
         const regionRow = document.getElementById('region-btns');
         const items = menuData.filter(i => i.category === state.category);
-        
-        // カテゴリーに応じて、どの項目でフィルターを作るか決める
-        let filterKey = null;
-        if (state.category === 'whisky' || state.category === 'wine' || state.category === 'beer') {
-            filterKey = 'region'; // ウイスキーなどは「地域」
-        } else if (state.category === 'cocktail') {
-            filterKey = 'base';   // カクテルは「ベース」
+
+        // 1. データの抽出（region, sub_region, base を取得）
+        const regionsRaw = [...new Set(items.map(i => i.region).filter(Boolean))];
+        // カクテルのために base も sub_region として扱う
+        const subRegionsRaw = [...new Set(items.map(i => i.sub_region || i.base).filter(Boolean))];
+
+        if (regionsRaw.length === 0 && subRegionsRaw.length === 0) {
+            filterArea.style.display = 'none';
+            return;
         }
 
-        // フィルター対象（region または base）がある場合のみボタンを生成
-        if (filterKey) {
-            const filterValues = [...new Set(items.map(i => i[filterKey]).filter(Boolean))];
-            
-            if (filterValues.length > 0) {
-                document.getElementById('filter-area').style.display = 'flex';
-                regionRow.innerHTML = ['ALL', ...filterValues.sort()].map(v => 
-                    `<button class="filter-btn ${state.region === v ? 'active' : ''}" 
-                     onclick="state.region='${v}'; renderFilters(); renderPage();">${v}</button>`
-                ).join('');
-                return; // 表示したので終了
-            }
-        }
+        filterArea.style.display = 'flex';
+        regionRow.innerHTML = '';
+
+        // --- A. 親カテゴリー（Region）の表示 ---
+        // ウイスキーやワインなど、Region（国など）がある場合
+        if (regionsRaw.length > 0) {
+            let regions = regionsRaw.slice();
+            if (state.category === 'whisky') {
+                const inOrder = COUNTRY_ORDER.filter(r => regions.includes(r));
+                const rest = regions.filter(r => !COUNTRY_ORDER.includes(r)).sort();
+                regions = [...inOrder, ...rest];
+            } else { regions = regions.sort(); }
+
+            const parentRow = document.createElement('div');
+            parentRow.className = 'region-row';
+            ['ALL', ...regions].forEach(r => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn' + (state.region === r ? ' active' : '');
+                btn.innerText = r;
+                btn.onclick = () => { state.region = r; state.subRegion = "ALL"; renderFilters(); renderPage(); };
+                parentRow.appendChild(btn);
+            });
+            regionRow.appendChild(parentRow);
+        } 
         
-        // フィルター項目がないカテゴリーの場合は非表示にする
-        document.getElementById('filter-area').style.display = 'none';
+        // --- B. 子カテゴリー（Sub Region / Base）の表示 ---
+        // 1. ウイスキーなどで特定のRegion（例：SCOTCH）が選ばれた時の2段目
+        // 2. またはカクテル、スピリッツなどで最初から1段目として出す場合
+        let showSubButtons = [];
+        let isDirectSub = false;
+
+        if (state.region !== 'ALL') {
+            // ウイスキーなどの2段目
+            showSubButtons = [...new Set(items.filter(i => i.region === state.region).map(i => i.sub_region || i.base).filter(Boolean))];
+        } else if (['spirits', 'cocktail', 'nonal', 'food'].includes(state.category)) {
+            // カクテルなどの1段目
+            showSubButtons = subRegionsRaw;
+            isDirectSub = true;
+        }
+
+        if (showSubButtons.length > 0) {
+            // 並び替えロジック
+            let sortedSub = showSubButtons.slice();
+            if (state.category === 'whisky' && state.region === 'SCOTCH') {
+                sortedSub = [...SCOTCH_AREA_ORDER.filter(s => showSubButtons.includes(s)), ...showSubButtons.filter(s => !SCOTCH_AREA_ORDER.includes(s)).sort()];
+            } else if (state.category === 'food') {
+                sortedSub = [...FOOD_ORDER.filter(s => showSubButtons.includes(s)), ...showSubButtons.filter(s => !FOOD_ORDER.includes(s)).sort()];
+            } else {
+                sortedSub.sort((a, b) => {
+                    const indexA = SPIRITS_BASE_ORDER.indexOf(a.toUpperCase());
+                    const indexB = SPIRITS_BASE_ORDER.indexOf(b.toUpperCase());
+                    return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB) || a.localeCompare(b);
+                });
+            }
+
+            const subRow = document.createElement('div');
+            subRow.className = 'region-row';
+            if (!isDirectSub) subRow.style.cssText = 'margin-top:8px; border-top:1px solid #444; padding-top:8px;';
+            
+            ['ALL', ...sortedSub].forEach(s => {
+                const btn = document.createElement('button');
+                btn.className = 'filter-btn' + (state.subRegion === s ? ' active' : '');
+                btn.innerText = s;
+                btn.onclick = () => { state.subRegion = s; renderFilters(); renderPage(); };
+                subRow.appendChild(btn);
+            });
+            regionRow.appendChild(subRow);
+        }
     }
 
+    // 5. ページ描画メイン
     function renderPage() {
         const container = document.getElementById('main-content');
-        document.querySelectorAll('.tab-link').forEach(l => l.classList.toggle('active', l.id === 'link-' + state.category));
         
-        // 言語別タイトル設定
-        const titleLabel = labels[state.lang] && labels[state.lang][state.category] 
-                           ? labels[state.lang][state.category] 
-                           : state.category.toUpperCase();
-        document.getElementById('page-title').innerText = titleLabel;
+        // タブのアクティブ化と多言語対応
+        document.querySelectorAll('.tab-link').forEach(l => {
+            const cat = l.id.replace('link-','');
+            l.classList.toggle('active', cat === state.category);
+            l.innerText = (labels[state.lang] && labels[state.lang][cat]) || cat.toUpperCase();
+        });
+        
+        document.getElementById('page-title').innerText = (labels[state.lang] && labels[state.lang][state.category]) || state.category.toUpperCase();
         
         let items = menuData.filter(i => i.category === state.category);
-        
-        // フィルターが適用されている場合（ALL以外）の絞り込み
-        if (state.region !== 'ALL') {
-            const filterKey = (state.category === 'cocktail') ? 'base' : 'region';
-            items = items.filter(i => i[filterKey] === state.region);
-        }
 
-        // 特別なレイアウト（知識、マップ、トピック、フライト）
+        // スライダー形式（知識・マップ・トピック・フライト）
         if (['knowledge', 'map', 'topic', 'flight'].includes(state.category)) {
             document.getElementById('sort-bar').style.display = 'none';
-            const item = items[state.slideIndex] || items[0];
-            if (!item) { container.innerHTML = ""; return; }
-
-            const displayName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];
-            const displayDesc = item['desc_' + state.lang] || item['desc_en'] || item['desc_jp'] || '';
-
-            container.innerHTML = `<div class="slider-wrapper">
-                <h3>${displayName}</h3>
-                <div class="slider-container">
-                    <img src="${item.image}" class="slide-img" onclick="handleImgClick(event, '${item.image}')">
-                </div>
-                <p>${displayDesc}</p>
-            </div>`;
-        } else {
-            // 通常のリストレイアウト
-            document.getElementById('sort-bar').style.display = 'flex';
-            items.sort((a,b) => (state.sort.key === 'price' ? a.price - b.price : a.name_jp.localeCompare(b.name_jp)) * state.sort.direction);
-            
-            container.innerHTML = items.map(item => {
-                const isSoldOut = item.sold_out === true;
-                const mainName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];
-                const subName = (state.lang === 'jp') ? item['name_en'] : item['name_jp'];
-
-                return `<div class="item-entry">
-                    <div class="item-card" style="${isSoldOut ? 'opacity:0.5' : ''}">
-                        ${item.image ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')">` : ''}
-                        <div>
-                            <div>${mainName} ${isSoldOut ? '<span style="color:#d9534f; font-weight:bold;">SOLD OUT</span>' : ''}</div>
-                            <div style="font-size:0.8rem; color:#888;">${subName || ''}</div>
-                        </div>
+            document.getElementById('filter-area').style.display = 'none';
+            if (items.length === 0) { container.innerHTML = '<p style="text-align:center; padding-top:50px;">NO DATA</p>'; return; }
+            if (state.slideIndex >= items.length) state.slideIndex = 0;
+            if (state.slideIndex < 0) state.slideIndex = items.length - 1;
+            const item = items[state.slideIndex];
+            container.innerHTML = `
+                <div class="slider-wrapper">
+                    <h3 style="color:var(--accent-gold); font-size:1.4rem; margin-bottom:15px;">${item[`name_${state.lang}`] || item.name_jp}</h3>
+                    <div class="slider-container">
+                        <button class="nav-btn" onclick="moveSlide(-1)" ${items.length <= 1 ? 'disabled' : ''}>❮</button>
+                        <img src="${item.image}" class="slide-img" onerror="this.src='images/no-image.png'">
+                        <button class="nav-btn" onclick="moveSlide(1)" ${items.length <= 1 ? 'disabled' : ''}>❯</button>
                     </div>
-                    <div class="item-price">${isSoldOut ? '---' : '¥' + item.price.toLocaleString()}</div>
+                    <p style="color:#ccc; margin-top:20px; line-height:1.6; max-width: 80%; margin-left: auto; margin-right: auto;">
+                        ${item[`desc_${state.lang}`] || item.desc_jp}
+                    </p>
+                    <div class="slide-counter">${state.slideIndex + 1} / ${items.length}</div>
                 </div>`;
-            }).join('');
+            return;
         }
+
+        // リスト形式
+        document.getElementById('sort-bar').style.display = 'flex';
+        
+        // フィルタリング処理
+        if (state.region !== 'ALL') items = items.filter(i => i.region === state.region);
+        if (state.subRegion !== 'ALL') {
+            // sub_region または base でフィルタリング
+            items = items.filter(i => i.sub_region === state.subRegion || i.base === state.subRegion);
+        }
+
+        // 並び替え処理
+        items.sort((a, b) => {
+            if (state.category === 'spirits' || state.category === 'cocktail') {
+                const baseA = String(a.sub_region || a.base || '').toUpperCase();
+                const baseB = String(b.sub_region || b.base || '').toUpperCase();
+                const ai = SPIRITS_BASE_ORDER.indexOf(baseA);
+                const bi = SPIRITS_BASE_ORDER.indexOf(baseB);
+                const diff = (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+                if (diff !== 0) return diff;
+            }
+            if (state.sort.key === 'price') return ((a.price || 0) - (b.price || 0)) * state.sort.direction;
+            const an = (a[`name_${state.lang}`] || a.name_jp || '').toLowerCase();
+            const bn = (b[`name_${state.lang}`] || b.name_jp || '').toLowerCase();
+            return an.localeCompare(bn) * state.sort.direction;
+        });
+
+        // ソートアイコン更新
+        document.getElementById('icon-name').innerText = state.sort.key === 'name' ? (state.sort.direction===1?'▲':'▼') : '⇅';
+        document.getElementById('icon-price').innerText = state.sort.key === 'price' ? (state.sort.direction===1?'▲':'▼') : '⇅';
+        
+        container.innerHTML = items.length ? '' : '<p style="text-align:center; padding-top:50px; color:#555;">NO ITEMS</p>';
+
+        items.forEach(item => {
+            const name = item[`name_${state.lang}`] || item.name_jp;
+            const price = item.price ? `¥${item.price.toLocaleString()}` : '';
+            const note = item[`note_${state.lang}`] || item.note_jp || ""; 
+            const isSoldOut = item.sold_out === true;
+
+            container.innerHTML += `
+            <div class="item-entry ${note !== '' ? 'has-note' : ''}"
+                data-name="${name.replace(/"/g, '&quot;')}" data-note="${note.replace(/"/g, '&quot;')}"
+                onclick="handleItemClick(this)" style="${note !== '' ? 'cursor:pointer;' : ''}">
+                <div class="item-card" style="${isSoldOut ? 'opacity:0.5;' : ''}">
+                ${item.image ? `<img src="${item.image}" class="item-img">` : ''}
+                <div>
+                    <div style="font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+                    ${name} ${isSoldOut ? '<span style="background:#d9534f; color:#fff; font-size:0.6rem; padding:2px 6px; border-radius:3px; font-weight:bold;">SOLD OUT</span>' : ''}
+                    </div>
+                    <div class="item-sub ${note !== '' ? 'has-note' : ''}" style="color:#888; font-size:0.8rem; margin-top:4px;">
+                    ${item.name_en || ''}
+                    </div>
+                </div>
+                </div>
+                <div class="item-price" style="${isSoldOut ? 'color:#555;' : ''}">
+                ${isSoldOut ? '---' : price}
+                </div>
+            </div>`;
+        });
     }
     // サービスワーカーを登録する命令（中身を書くのではなく、sw.js を呼び出す）
     if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
 </script>
 </body>
 </html>
-
-
-
-20260119
