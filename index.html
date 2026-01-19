@@ -1,335 +1,353 @@
-﻿<!DOCTYPE html>		
-<html lang="ja">		
-<head>		
-    <meta charset="UTF-8">		
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">		
-    <title>Bar SPEC Menu</title>		
-		
-    <link rel="manifest" href="manifest.json">		
-    <meta name="mobile-web-app-capable" content="yes">		
-    <meta name="apple-mobile-web-app-capable" content="yes">		
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">		
-    <meta name="apple-mobile-web-app-title" content="Bar SPEC">		
-    <link rel="apple-touch-icon" href="images/logo.png">		
-		
-    <style>		
-        :root { --bg-sidebar: #1a1a1a; --bg-main: #252525; --accent-gold: #c5a059; --text-white: #e0e0e0; --text-gray: #888; }		
-        body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-sidebar); color: var(--text-white); height: 100vh; overflow: hidden; display: flex; }		
-		
-        .sidebar { width: 140px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #333; overflow-y: auto; }		
-        .tab-link { display: block; text-decoration: none; padding: 20px 15px; color: var(--text-gray); font-size: 0.9rem; border-bottom: 1px solid #2a2a2a; cursor: pointer; }		
-        .tab-link.active { background-color: var(--accent-gold); color: #000; font-weight: bold; }		
-		
-        .main-area { flex: 1; background-color: var(--bg-main); display: flex; flex-direction: column; overflow: hidden; }		
-        .header { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }		
-        .page-title { margin: 0; font-size: 1.6rem; color: var(--accent-gold); font-family: "YuMincho", serif; }		
-        		
-        .lang-btns { display: flex; gap: 4px; }		
-        .lang-btn { background: #333; border: none; color: #888; padding: 5px 8px; cursor: pointer; border-radius: 4px; font-size: 0.65rem; white-space: nowrap; }		
-        .lang-btn.active { background: var(--accent-gold); color: #000; }		
-		
-        .staff-btn { background: rgba(197, 160, 89, 0.1); border: 1px solid #333; color: #444; font-size: 1.2rem; cursor: pointer; }		
-        .staff-btn:active { color: var(--accent-gold); opacity: 1; }		
-		
-        .filter-area { padding: 10px 30px; background: #2a2a2a; border-bottom: 1px solid #333; display: flex; flex-direction: column; gap: 8px; }		
-        .region-row { display: flex; gap: 6px; flex-wrap: wrap; }		
-        .filter-btn { padding: 4px 10px; background: transparent; border: 1px solid #555; color: #aaa; cursor: pointer; font-size: 0.75rem; }		
-        .filter-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }		
-        .sort-bar { background: #1a1a1a; padding: 8px 30px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; border-bottom: 1px solid #333; }		
-		
-        .content-scroll { flex: 1; overflow-y: auto; padding: 0 30px 40px 30px; }		
-        .item-entry { border-bottom: 1px solid #333; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }		
-        .item-card { display: flex; gap: 15px; align-items: flex-start; }		
-        .item-img { width: 150px; height: 100px; object-fit: cover; border-radius: 4px; }		
-        .item-price { color: var(--accent-gold); font-size: 1.1rem; font-weight: bold; }		
-		
-        .slider-wrapper { padding-top: 20px; text-align: center; }		
-        .slider-container { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 20px 0; }		
-        .nav-btn { background: rgba(197, 160, 89, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 2rem; padding: 10px 20px; border-radius: 50%; cursor: pointer; }		
-        .nav-btn:disabled { opacity: 0.1; cursor: default; }		
-        .slide-img { width: 75%; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }		
-        .slide-counter { color: var(--text-gray); font-size: 0.8rem; margin-top: 15px; }		
-		
-        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }		
-        .modal-content { background: #252525; border-top: 4px solid var(--accent-gold); padding: 30px; width: 85%; max-width: 600px; border-radius: 12px; position: relative; }		
-        .item-sub.has-note::after { content: "ⓘ"; margin-left: 6px; font-size: 0.7rem; color: var(--accent-gold); opacity: 0.8; }		
-		
-        body.staff-mode { --bg-sidebar: #ffffff; --bg-main: #f5f5f5; --text-white: #000000; --text-gray: #333333; --accent-gold: #8b6d31; }		
-        body.staff-mode .sidebar { border-right: 1px solid #ccc; }		
-        body.staff-mode .tab-link { border-bottom: 1px solid #eee; color: #333; }		
-        body.staff-mode .header, body.staff-mode .filter-area, body.staff-mode .sort-bar, body.staff-mode .item-entry { border-bottom: 1px solid #ccc; }		
-        body.staff-mode .page-title { color: #000; }		
-		
-		/* 画像拡大モーダル */
-.img-modal-overlay{		
-  display:none;		
-  position:fixed; inset:0;		
-  background:rgba(0,0,0,0.9);		
-  z-index:3000;		
-  justify-content:center; align-items:center;		
-  padding:16px;		
-}		
-.img-modal-box{		
-  position:relative;		
-  width:100%;		
-  max-width:980px;		
-}		
-/* 画像拡大モーダル内の画像設定 */		
-.img-modal-img {		
-    width: 100%;		
-    height: auto;		
-    max-height: 85vh;		
-    object-fit: contain;		
-    border-radius: 12px;		
-    box-shadow: 0 10px 30px rgba(0,0,0,0.6);		
-    background: #111;		
-    /* ★追加: 拡大・移動をスムーズにする設定 */		
-    transition: transform 0.1s ease-out;		
-    cursor: grab;		
-    touch-action: none; /* ブラウザ標準のズームを無効化してJSで制御 */		
-}		
-/* 画像拡大モーダルの閉じるボタンを修正 */		
-.img-modal-close {		
-    position: absolute;		
-    top: 10px;       /* 画像の少し内側に配置 */		
-    right: 10px;		
-    width: 44px;     /* 指で押しやすいサイズ（44px以上が推奨） */		
-    height: 44px;		
-    background: rgba(197, 160, 89, 0.9); /* Bar SPECのゴールド */		
-    color: #000;		
-    border: none;		
-    border-radius: 22px;		
-    font-size: 1.5rem;		
-    font-weight: bold;		
-    cursor: pointer;		
-    z-index: 10;     /* ★重要: 画像(1)よりも高い数値にして最前面へ */		
-    display: flex;		
-    justify-content: center;		
-    align-items: center;		
-    box-shadow: 0 4px 10px rgba(0,0,0,0.5);		
-}		
-		
-/* 念のため画像側の重なり順を低く設定 */		
-.img-modal-img {		
-    z-index: 1;      /* ボタンより下に配置 */		
-    position: relative;		
-}		
-</style>		
-</head>		
-		
-<body>		
-<nav class="sidebar">		
-    <div style="text-align:center; padding:25px 0; border-bottom:1px solid #2a2a2a;">		
-        <img src="images/logo.png" style="width:100px; height:auto; filter: drop-shadow(0 0 5px rgba(197, 160, 89, 0.3));">		
-    </div>		
-    <a href="#recommend" class="tab-link" id="link-recommend">RECOMMEND</a>		
-    <a href="#whisky" class="tab-link" id="link-whisky">WHISKY</a>		
-    <a href="#spirits" class="tab-link" id="link-spirits">SPIRITS</a>		
-    <a href="#beer" class="tab-link" id="link-beer">BEER</a>		
-    <a href="#wine" class="tab-link" id="link-wine">WINE</a>		
-    <a href="#cocktail" class="tab-link" id="link-cocktail">COCKTAIL</a>		
-    <a href="#nonal" class="tab-link" id="link-nonal">SOFT DRINK</a>		
-    <a href="#food" class="tab-link" id="link-food">FOOD</a>		
-    <a href="#flight" class="tab-link" id="link-flight">FLIGHT</a>		
-    <a href="#topic" class="tab-link" id="link-topic">TOPIC</a>		
-    <a href="#knowledge" class="tab-link" id="link-knowledge">KNOWLEDGE</a>		
-    <a href="#map" class="tab-link" id="link-map">MAP</a>		
-    <a href="https://whisky-matrix.vercel.app/" class="tab-link" target="_blank" style="color: var(--accent-gold); border-top: 1px solid #444; margin-top: 10px;">Whisky Matrix ↗</a>		
-</nav>		
-		
-<main class="main-area">		
-    <div class="header">		
-        <h2 class="page-title" id="page-title">MENU</h2>		
-        <button id="staff-btn" class="staff-btn">⚙</button>		
-        <div class="lang-btns">		
-            <button class="lang-btn active" data-lang="jp" onclick="setLang('jp')">日本語</button>		
-            <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>		
-            <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>		
-            <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>		
-            <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>		
-        </div>		
-    </div>		
-		
-    <div class="filter-area" id="filter-area" style="display:none;">		
-        <div class="region-row" id="region-btns"></div>		
-    </div>		
-		
-    <div class="sort-bar" id="sort-bar">		
-        <div onclick="toggleSort('name')" style="cursor:pointer;">銘柄名 <span id="icon-name">▲</span></div>		
-        <div onclick="toggleSort('price')" style="cursor:pointer;">価格 <span id="icon-price">⇅</span></div>		
-    </div>		
-		
-    <div class="content-scroll" id="main-content"></div>		
-</main>		
-		
-<div id="img-modal" class="img-modal-overlay" onclick="closeImgModal()">		
-  <div class="img-modal-box" onclick="event.stopPropagation()">		
-    <button class="img-modal-close" onclick="closeImgModal()">×</button>		
-    <img id="img-modal-img" class="img-modal-img" src="" alt="">		
-  </div>		
-</div>		
-		
-<script src="menu_data.js"></script>		
-<script>		
-    // 1. ログインチェック		
-    if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }		
-		
-    // --- 画像ズーム用の変数 ---		
-    let scale = 1, lastScale = 1;		
-    let pointX = 0, pointY = 0, startX = 0, startY = 0;		
-    let isDragging = false;		
-    let lastDistance = 0;		
-    const modalImg = document.getElementById('img-modal-img');		
-		
-    // 2. 画像拡大モーダル制御（ワンタップ & ピンチズーム）		
-    function handleImgClick(e, src) {		
-        e.stopPropagation(); // 親要素のクリックを防止		
-        const modal = document.getElementById('img-modal');		
-        scale = 1; pointX = 0; pointY = 0; lastScale = 1; // リセット		
-        modalImg.style.transform = `translate(0px, 0px) scale(1)`;		
-        modalImg.src = src;		
-        modal.style.display = 'flex';		
-    }		
-		
-    function closeImgModal() { document.getElementById('img-modal').style.display = 'none'; }		
-		
-    // ピンチ・ドラッグ操作の登録		
-    modalImg.addEventListener('touchstart', (e) => {		
-        if (e.touches.length === 2) {		
-            lastDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);		
-        } else if (e.touches.length === 1) {		
-            isDragging = true;		
-            startX = e.touches[0].pageX - pointX;		
-            startY = e.touches[0].pageY - pointY;		
-        }		
-    });		
-		
-    modalImg.addEventListener('touchmove', (e) => {		
-        e.preventDefault();		
-        if (e.touches.length === 2) {		
-            const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);		
-            scale = Math.min(Math.max(1, lastScale * (dist / lastDistance)), 4);		
-        } else if (e.touches.length === 1 && isDragging && scale > 1) {		
-            pointX = e.touches[0].pageX - startX;		
-            pointY = e.touches[0].pageY - startY;		
-        }		
-        modalImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;		
-    }, { passive: false });		
-		
-    modalImg.addEventListener('touchend', () => { lastScale = scale; isDragging = false; });		
-		
-    // 3. アプリの状態管理		
-    // 3. アプリの状態管理		
-    let state = { category: "recommend", lang: "jp", region: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };		
-		
-    // ★修正：全ての言語のラベルを定義（エラー防止）		
-    const labels = {		
-        jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "スピリッツ", beer: "ビール", wine: "ワイン", cocktail: "カクテル", nonal: "ソフトドリンク", food: "フード", topic: "トピック", flight: "フライト", knowledge: "知識", map: "マップ" },		
-        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },		
-        ko: { recommend: "추천", whisky: "위스키", spirits: "증류주", beer: "맥주", wine: "와인", cocktail: "칵테일", nonal: "소프트 드リンク", food: "음식", topic: "토픽", flight: "플ライト", knowledge: "지식", map: "지도" },		
-        zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒", nonal: "软饮料", food: "美食", topic: "话题", flight: "飞行套餐", knowledge: "知识", map: "地图" },		
-        es: { recommend: "RECOMENDADO", whisky: "WHISKY", spirits: "DESTILADOS", beer: "CERVEZA", wine: "VINO", cocktail: "CÓCTEL", nonal: "REFRESCOS", food: "COMIDA", topic: "TEMA", flight: "VUELO", knowledge: "CONOCIMIENTO", map: "MAPA" }		
-    };		
-		
-    function setLang(l) { 		
-        state.lang = l; 		
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === l));		
-        renderPage(); 		
-    }		
-		
-    function toggleSort(key) { 		
-        if (state.sort.key === key) state.sort.direction *= -1; 		
-        else { state.sort.key = key; state.sort.direction = 1; } 		
-        renderPage(); 		
-    }		
-		
-    window.addEventListener('hashchange', () => {		
-        state.category = window.location.hash.replace('#','') || 'recommend';		
-        state.region = "ALL";		
-        renderFilters(); renderPage();		
-    });		
-		
-    window.addEventListener('load', () => {		
-        state.category = window.location.hash.replace('#','') || 'recommend';		
-        renderFilters(); renderPage();		
-    });		
-		
-// 4. 描画メイン		
-    function renderFilters() {		
-        const regionRow = document.getElementById('region-btns');		
-        const items = menuData.filter(i => i.category === state.category);		
-        		
-        // ★修正：カテゴリーがcocktailなら 'base'、それ以外なら 'region' をフィルター項目にする		
-        const filterKey = (state.category === 'cocktail') ? 'base' : 'region';		
-        		
-        // 重複を除去してフィルターリストを作成		
-        const filters = [...new Set(items.map(i => i[filterKey]).filter(Boolean))];		
-        		
-        document.getElementById('filter-area').style.display = filters.length > 0 ? 'flex' : 'none';		
-        		
-        // ボタンの生成（state.region を汎用的なフィルター値として再利用）		
-        regionRow.innerHTML = ['ALL', ...filters.sort()].map(f => 		
-            `<button class="filter-btn ${state.region === f ? 'active' : ''}" 		
-             onclick="state.region='${f}'; renderFilters(); renderPage();">${f}</button>`		
-        ).join('');		
-    }		
-		
-    function renderPage() {		
-        const container = document.getElementById('main-content');		
-        document.querySelectorAll('.tab-link').forEach(l => l.classList.toggle('active', l.id === 'link-' + state.category));		
-        		
-        document.getElementById('page-title').innerText = labels[state.lang][state.category] || state.category.toUpperCase();		
-        		
-        let items = menuData.filter(i => i.category === state.category);		
-        		
-        // ★修正：表示中のカテゴリーに合わせてフィルター条件を切り替え		
-        if (state.region !== 'ALL') {		
-            const filterKey = (state.category === 'cocktail') ? 'base' : 'region';		
-            items = items.filter(i => i[filterKey] === state.region);		
-        }		
-		
-        if (['knowledge', 'map', 'topic', 'flight'].includes(state.category)) {		
-            document.getElementById('sort-bar').style.display = 'none';		
-            const item = items[state.slideIndex] || items[0];		
-            if (!item) {		
-                container.innerHTML = "";		
-                return;		
-            }		
-		
-            const displayName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];		
-            const displayDesc = item['desc_' + state.lang] || item['desc_en'] || item['desc_jp'] || '';		
-		
-            container.innerHTML = `<div class="slider-wrapper">		
-                <h3>${displayName}</h3>		
-                <div class="slider-container">		
-                    <img src="${item.image}" class="slide-img" onclick="handleImgClick(event, '${item.image}')">		
-                </div>		
-                <p>${displayDesc}</p>		
-            </div>`;		
-        } else {		
-            document.getElementById('sort-bar').style.display = 'flex';		
-            items.sort((a,b) => (state.sort.key === 'price' ? a.price - b.price : a.name_jp.localeCompare(b.name_jp)) * state.sort.direction);		
-            		
-            container.innerHTML = items.map(item => {		
-                const isSoldOut = item.sold_out === true;		
-                const mainName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];		
-                const subName = (state.lang === 'jp') ? item['name_en'] : item['name_jp'];		
-		
-                return `<div class="item-entry">		
-                    <div class="item-card" style="${isSoldOut ? 'opacity:0.5' : ''}">		
-                        ${item.image ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')">` : ''}		
-                        <div>		
-                            <div>${mainName} ${isSoldOut ? '<span style="color:#d9534f; font-weight:bold;">SOLD OUT</span>' : ''}</div>		
-                            <div style="font-size:0.8rem; color:#888;">${subName || ''}</div>		
-                        </div>		
-                    </div>		
-                    <div class="item-price">${isSoldOut ? '---' : '¥' + item.price.toLocaleString()}</div>		
-                </div>`;		
-            }).join('');		
-        }		
-    }		
-    // サービスワーカーを登録する命令（中身を書くのではなく、sw.js を呼び出す）		
-    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }		
-</script>		
-</body>		
-</html>		
+﻿<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Bar SPEC Menu</title>
+
+    <link rel="manifest" href="manifest.json">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Bar SPEC">
+    <link rel="apple-touch-icon" href="images/logo.png">
+
+    <style>
+        :root { --bg-sidebar: #1a1a1a; --bg-main: #252525; --accent-gold: #c5a059; --text-white: #e0e0e0; --text-gray: #888; }
+        body { margin: 0; padding: 0; font-family: "Helvetica Neue", Arial, sans-serif; background-color: var(--bg-sidebar); color: var(--text-white); height: 100vh; overflow: hidden; display: flex; }
+
+        .sidebar { width: 140px; background-color: var(--bg-sidebar); display: flex; flex-direction: column; flex-shrink: 0; border-right: 1px solid #333; overflow-y: auto; }
+        .tab-link { display: block; text-decoration: none; padding: 20px 15px; color: var(--text-gray); font-size: 0.9rem; border-bottom: 1px solid #2a2a2a; cursor: pointer; }
+        .tab-link.active { background-color: var(--accent-gold); color: #000; font-weight: bold; }
+
+        .main-area { flex: 1; background-color: var(--bg-main); display: flex; flex-direction: column; overflow: hidden; }
+        .header { padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #333; }
+        .page-title { margin: 0; font-size: 1.6rem; color: var(--accent-gold); font-family: "YuMincho", serif; }
+        
+        .lang-btns { display: flex; gap: 4px; }
+        .lang-btn { background: #333; border: none; color: #888; padding: 5px 8px; cursor: pointer; border-radius: 4px; font-size: 0.65rem; white-space: nowrap; }
+        .lang-btn.active { background: var(--accent-gold); color: #000; }
+
+        .staff-btn { background: rgba(197, 160, 89, 0.1); border: 1px solid #333; color: #444; font-size: 1.2rem; cursor: pointer; }
+        .staff-btn:active { color: var(--accent-gold); opacity: 1; }
+
+        .filter-area { padding: 10px 30px; background: #2a2a2a; border-bottom: 1px solid #333; display: flex; flex-direction: column; gap: 8px; }
+        .region-row { display: flex; gap: 6px; flex-wrap: wrap; }
+        .filter-btn { padding: 4px 10px; background: transparent; border: 1px solid #555; color: #aaa; cursor: pointer; font-size: 0.75rem; }
+        .filter-btn.active { background: var(--accent-gold); color: #000; border-color: var(--accent-gold); }
+        .sort-bar { background: #1a1a1a; padding: 8px 30px; display: flex; justify-content: space-between; font-size: 0.8rem; color: #666; border-bottom: 1px solid #333; }
+
+        .content-scroll { flex: 1; overflow-y: auto; padding: 0 30px 40px 30px; }
+        .item-entry { border-bottom: 1px solid #333; padding: 15px 0; display: flex; justify-content: space-between; align-items: center; }
+        .item-card { display: flex; gap: 15px; align-items: flex-start; }
+        .item-img { width: 150px; height: 100px; object-fit: cover; border-radius: 4px; }
+        .item-price { color: var(--accent-gold); font-size: 1.1rem; font-weight: bold; }
+
+        .slider-wrapper { padding-top: 20px; text-align: center; }
+        .slider-container { display: flex; align-items: center; justify-content: space-between; gap: 20px; margin: 20px 0; }
+        .nav-btn { background: rgba(197, 160, 89, 0.2); border: 1px solid var(--accent-gold); color: var(--accent-gold); font-size: 2rem; padding: 10px 20px; border-radius: 50%; cursor: pointer; }
+        .nav-btn:disabled { opacity: 0.1; cursor: default; }
+        .slide-img { width: 75%; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .slide-counter { color: var(--text-gray); font-size: 0.8rem; margin-top: 15px; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 2000; justify-content: center; align-items: center; }
+        .modal-content { background: #252525; border-top: 4px solid var(--accent-gold); padding: 30px; width: 85%; max-width: 600px; border-radius: 12px; position: relative; }
+        .item-sub.has-note::after { content: "ⓘ"; margin-left: 6px; font-size: 0.7rem; color: var(--accent-gold); opacity: 0.8; }
+
+        body.staff-mode { --bg-sidebar: #ffffff; --bg-main: #f5f5f5; --text-white: #000000; --text-gray: #333333; --accent-gold: #8b6d31; }
+        body.staff-mode .sidebar { border-right: 1px solid #ccc; }
+        body.staff-mode .tab-link { border-bottom: 1px solid #eee; color: #333; }
+        body.staff-mode .header, body.staff-mode .filter-area, body.staff-mode .sort-bar, body.staff-mode .item-entry { border-bottom: 1px solid #ccc; }
+        body.staff-mode .page-title { color: #000; }
+
+
+.img-modal-overlay{
+  display:none;
+  position:fixed; inset:0;
+  background:rgba(0,0,0,0.9);
+  z-index:3000;
+  justify-content:center; align-items:center;
+  padding:16px;
+}
+.img-modal-box{
+  position:relative;
+  width:100%;
+  max-width:980px;
+}
+/* 画像拡大モーダル内の画像設定 */
+.img-modal-img {
+    width: 100%;
+    height: auto;
+    max-height: 85vh;
+    object-fit: contain;
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.6);
+    background: #111;
+    /* ★追加: 拡大・移動をスムーズにする設定 */
+    transition: transform 0.1s ease-out;
+    cursor: grab;
+    touch-action: none; /* ブラウザ標準のズームを無効化してJSで制御 */
+}
+/* 画像拡大モーダルの閉じるボタンを修正 */
+.img-modal-close {
+    position: absolute;
+    top: 10px;       /* 画像の少し内側に配置 */
+    right: 10px;
+    width: 44px;     /* 指で押しやすいサイズ（44px以上が推奨） */
+    height: 44px;
+    background: rgba(197, 160, 89, 0.9); /* Bar SPECのゴールド */
+    color: #000;
+    border: none;
+    border-radius: 22px;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 10;     /* ★重要: 画像(1)よりも高い数値にして最前面へ */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.5);
+}
+
+/* 念のため画像側の重なり順を低く設定 */
+.img-modal-img {
+    z-index: 1;      /* ボタンより下に配置 */
+    position: relative;
+}
+</style>
+</head>
+
+<body>
+<nav class="sidebar">
+    <div style="text-align:center; padding:25px 0; border-bottom:1px solid #2a2a2a;">
+        <img src="images/logo.png" style="width:100px; height:auto; filter: drop-shadow(0 0 5px rgba(197, 160, 89, 0.3));">
+    </div>
+    <a href="#recommend" class="tab-link" id="link-recommend">RECOMMEND</a>
+    <a href="#whisky" class="tab-link" id="link-whisky">WHISKY</a>
+    <a href="#spirits" class="tab-link" id="link-spirits">SPIRITS</a>
+    <a href="#beer" class="tab-link" id="link-beer">BEER</a>
+    <a href="#wine" class="tab-link" id="link-wine">WINE</a>
+    <a href="#cocktail" class="tab-link" id="link-cocktail">COCKTAIL</a>
+    <a href="#nonal" class="tab-link" id="link-nonal">SOFT DRINK</a>
+    <a href="#food" class="tab-link" id="link-food">FOOD</a>
+    <a href="#flight" class="tab-link" id="link-flight">FLIGHT</a>
+    <a href="#topic" class="tab-link" id="link-topic">TOPIC</a>
+    <a href="#knowledge" class="tab-link" id="link-knowledge">KNOWLEDGE</a>
+    <a href="#map" class="tab-link" id="link-map">MAP</a>
+    <a href="https://whisky-matrix.vercel.app/" class="tab-link" target="_blank" style="color: var(--accent-gold); border-top: 1px solid #444; margin-top: 10px;">Whisky Matrix ↗</a>
+</nav>
+
+<main class="main-area">
+    <div class="header">
+        <h2 class="page-title" id="page-title">MENU</h2>
+        <button id="staff-btn" class="staff-btn">⚙</button>
+        <div class="lang-btns">
+            <button class="lang-btn active" data-lang="jp" onclick="setLang('jp')">日本語</button>
+            <button class="lang-btn" data-lang="en" onclick="setLang('en')">English</button>
+            <button class="lang-btn" data-lang="ko" onclick="setLang('ko')">한국어</button>
+            <button class="lang-btn" data-lang="zh" onclick="setLang('zh')">中文</button>
+            <button class="lang-btn" data-lang="es" onclick="setLang('es')">Español</button>
+        </div>
+    </div>
+
+    <div class="filter-area" id="filter-area" style="display:none;">
+        <div class="region-row" id="region-btns"></div>
+    </div>
+
+    <div class="sort-bar" id="sort-bar">
+        <div onclick="toggleSort('name')" style="cursor:pointer;">銘柄名 <span id="icon-name">▲</span></div>
+        <div onclick="toggleSort('price')" style="cursor:pointer;">価格 <span id="icon-price">⇅</span></div>
+    </div>
+
+    <div class="content-scroll" id="main-content"></div>
+</main>
+
+<div id="img-modal" class="img-modal-overlay" onclick="closeImgModal()">
+  <div class="img-modal-box" onclick="event.stopPropagation()">
+    <button class="img-modal-close" onclick="closeImgModal()">×</button>
+    <img id="img-modal-img" class="img-modal-img" src="" alt="">
+  </div>
+</div>
+
+<script src="menu_data.js"></script>
+<script>
+    // 1. ログインチェック
+    if (sessionStorage.getItem("isLoggedIn") !== "true") { window.location.href = "login.html"; }
+
+    // --- 画像ズーム用の変数 ---
+    let scale = 1, lastScale = 1;
+    let pointX = 0, pointY = 0, startX = 0, startY = 0;
+    let isDragging = false;
+    let lastDistance = 0;
+    const modalImg = document.getElementById('img-modal-img');
+
+    // 2. 画像拡大モーダル制御（ワンタップ & ピンチズーム）
+    function handleImgClick(e, src) {
+        e.stopPropagation(); // 親要素のクリックを防止
+        const modal = document.getElementById('img-modal');
+        scale = 1; pointX = 0; pointY = 0; lastScale = 1; // リセット
+        modalImg.style.transform = `translate(0px, 0px) scale(1)`;
+        modalImg.src = src;
+        modal.style.display = 'flex';
+    }
+
+    function closeImgModal() { document.getElementById('img-modal').style.display = 'none'; }
+
+    // ピンチ・ドラッグ操作の登録
+    modalImg.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+            lastDistance = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+        } else if (e.touches.length === 1) {
+            isDragging = true;
+            startX = e.touches[0].pageX - pointX;
+            startY = e.touches[0].pageY - pointY;
+        }
+    });
+
+    modalImg.addEventListener('touchmove', (e) => {
+        e.preventDefault();
+        if (e.touches.length === 2) {
+            const dist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+            scale = Math.min(Math.max(1, lastScale * (dist / lastDistance)), 4);
+        } else if (e.touches.length === 1 && isDragging && scale > 1) {
+            pointX = e.touches[0].pageX - startX;
+            pointY = e.touches[0].pageY - startY;
+        }
+        modalImg.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
+    }, { passive: false });
+
+    modalImg.addEventListener('touchend', () => { lastScale = scale; isDragging = false; });
+
+    // 3. アプリの状態管理
+    // 3. アプリの状態管理
+    let state = { category: "recommend", lang: "jp", region: "ALL", sort: { key: 'name', direction: 1 }, slideIndex: 0 };
+
+    // ★修正：全ての言語のラベルを定義（エラー防止）
+    const labels = {
+        jp: { recommend: "おすすめ", whisky: "ウイスキー", spirits: "スピリッツ", beer: "ビール", wine: "ワイン", cocktail: "カクテル", nonal: "ソフトドリンク", food: "フード", topic: "トピック", flight: "フライト", knowledge: "知識", map: "マップ" },
+        en: { recommend: "RECOMMEND", whisky: "WHISKY", spirits: "SPIRITS", beer: "BEER", wine: "WINE", cocktail: "COCKTAIL", nonal: "SOFT DRINK", food: "FOOD", topic: "TOPIC", flight: "FLIGHT", knowledge: "KNOWLEDGE", map: "MAP" },
+        ko: { recommend: "추천", whisky: "위스키", spirits: "증류주", beer: "맥주", wine: "와인", cocktail: "칵테일", nonal: "소프트 드リンク", food: "음식", topic: "토픽", flight: "플ライト", knowledge: "지식", map: "지도" },
+        zh: { recommend: "推荐", whisky: "威士忌", spirits: "烈酒", beer: "啤酒", wine: "葡萄酒", cocktail: "鸡尾酒", nonal: "软饮料", food: "美食", topic: "话题", flight: "飞行套餐", knowledge: "知识", map: "地图" },
+        es: { recommend: "RECOMENDADO", whisky: "WHISKY", spirits: "DESTILADOS", beer: "CERVEZA", wine: "VINO", cocktail: "CÓCTEL", nonal: "REFRESCOS", food: "COMIDA", topic: "TEMA", flight: "VUELO", knowledge: "CONOCIMIENTO", map: "MAPA" }
+    };
+
+    function setLang(l) { 
+        state.lang = l; 
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.toggle('active', b.getAttribute('data-lang') === l));
+        renderPage(); 
+    }
+
+    function toggleSort(key) { 
+        if (state.sort.key === key) state.sort.direction *= -1; 
+        else { state.sort.key = key; state.sort.direction = 1; } 
+        renderPage(); 
+    }
+
+    window.addEventListener('hashchange', () => {
+        state.category = window.location.hash.replace('#','') || 'recommend';
+        state.region = "ALL";
+        renderFilters(); renderPage();
+    });
+
+    window.addEventListener('load', () => {
+        state.category = window.location.hash.replace('#','') || 'recommend';
+        renderFilters(); renderPage();
+    });
+
+// 4. 描画メイン
+    function renderFilters() {
+        const regionRow = document.getElementById('region-btns');
+        const items = menuData.filter(i => i.category === state.category);
+        
+        // カテゴリーに応じて、どの項目でフィルターを作るか決める
+        let filterKey = null;
+        if (state.category === 'whisky' || state.category === 'wine' || state.category === 'beer') {
+            filterKey = 'region'; // ウイスキーなどは「地域」
+        } else if (state.category === 'cocktail') {
+            filterKey = 'base';   // カクテルは「ベース」
+        }
+
+        // フィルター対象（region または base）がある場合のみボタンを生成
+        if (filterKey) {
+            const filterValues = [...new Set(items.map(i => i[filterKey]).filter(Boolean))];
+            
+            if (filterValues.length > 0) {
+                document.getElementById('filter-area').style.display = 'flex';
+                regionRow.innerHTML = ['ALL', ...filterValues.sort()].map(v => 
+                    `<button class="filter-btn ${state.region === v ? 'active' : ''}" 
+                     onclick="state.region='${v}'; renderFilters(); renderPage();">${v}</button>`
+                ).join('');
+                return; // 表示したので終了
+            }
+        }
+        
+        // フィルター項目がないカテゴリーの場合は非表示にする
+        document.getElementById('filter-area').style.display = 'none';
+    }
+
+    function renderPage() {
+        const container = document.getElementById('main-content');
+        document.querySelectorAll('.tab-link').forEach(l => l.classList.toggle('active', l.id === 'link-' + state.category));
+        
+        // 言語別タイトル設定
+        const titleLabel = labels[state.lang] && labels[state.lang][state.category] 
+                           ? labels[state.lang][state.category] 
+                           : state.category.toUpperCase();
+        document.getElementById('page-title').innerText = titleLabel;
+        
+        let items = menuData.filter(i => i.category === state.category);
+        
+        // フィルターが適用されている場合（ALL以外）の絞り込み
+        if (state.region !== 'ALL') {
+            const filterKey = (state.category === 'cocktail') ? 'base' : 'region';
+            items = items.filter(i => i[filterKey] === state.region);
+        }
+
+        // 特別なレイアウト（知識、マップ、トピック、フライト）
+        if (['knowledge', 'map', 'topic', 'flight'].includes(state.category)) {
+            document.getElementById('sort-bar').style.display = 'none';
+            const item = items[state.slideIndex] || items[0];
+            if (!item) { container.innerHTML = ""; return; }
+
+            const displayName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];
+            const displayDesc = item['desc_' + state.lang] || item['desc_en'] || item['desc_jp'] || '';
+
+            container.innerHTML = `<div class="slider-wrapper">
+                <h3>${displayName}</h3>
+                <div class="slider-container">
+                    <img src="${item.image}" class="slide-img" onclick="handleImgClick(event, '${item.image}')">
+                </div>
+                <p>${displayDesc}</p>
+            </div>`;
+        } else {
+            // 通常のリストレイアウト
+            document.getElementById('sort-bar').style.display = 'flex';
+            items.sort((a,b) => (state.sort.key === 'price' ? a.price - b.price : a.name_jp.localeCompare(b.name_jp)) * state.sort.direction);
+            
+            container.innerHTML = items.map(item => {
+                const isSoldOut = item.sold_out === true;
+                const mainName = item['name_' + state.lang] || item['name_en'] || item['name_jp'];
+                const subName = (state.lang === 'jp') ? item['name_en'] : item['name_jp'];
+
+                return `<div class="item-entry">
+                    <div class="item-card" style="${isSoldOut ? 'opacity:0.5' : ''}">
+                        ${item.image ? `<img src="${item.image}" class="item-img" onclick="handleImgClick(event, '${item.image}')">` : ''}
+                        <div>
+                            <div>${mainName} ${isSoldOut ? '<span style="color:#d9534f; font-weight:bold;">SOLD OUT</span>' : ''}</div>
+                            <div style="font-size:0.8rem; color:#888;">${subName || ''}</div>
+                        </div>
+                    </div>
+                    <div class="item-price">${isSoldOut ? '---' : '¥' + item.price.toLocaleString()}</div>
+                </div>`;
+            }).join('');
+        }
+    }
+    // サービスワーカーを登録する命令（中身を書くのではなく、sw.js を呼び出す）
+    if ('serviceWorker' in navigator) { navigator.serviceWorker.register('sw.js'); }
+</script>
+</body>
+</html>
+
+
+
+20260119
